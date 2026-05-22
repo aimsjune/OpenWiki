@@ -6,38 +6,42 @@
 
 ## これは何ですか？
 
-LLM Wiki は [Claude Code](https://claude.ai/code) を活用した個人知識管理システムです。ノート、Webクリッピング、論文、日記などの素材を `raw/` に置くだけで、AIが自動的に構造化・相互リンクされた wiki ページとして `wiki/` に整理します。
+LLM Wiki は `skill.io` 互換エージェント向けの個人知識ベース用スキャフォールドです。原本素材は `raw/`、構造化知識は `wiki/`、保存された分析や回答は `concepts/` に置かれます。公開スキルは `skill/` で管理され、インスタンス単位の実行時契約は `WIKI.md` で表現されます。
 
-**核心的な考え方：**
-- `raw/` は原本を保存するだけで、絶対に変更しない
-- `wiki/` は AI が書き・維持し、ページ同士がリンクでつながる
-- 毎回の取り込みで知識ベース全体が豊かになる — 孤立したアーカイブではない
-
----
-
-## 仕組み
-
-```
-あなたのノート / Webページ / 論文
-        ↓
-   raw/  （読み取り専用の原本レイヤー）
-        ↓  Claude Code が処理
-   wiki/ （AI が管理する構造化ページ）
-        ↓
-   index.md（全体ナビ） + log.md（操作履歴）
-```
-
-AI は処理中に以下を行います：
-1. 重要概念を抽出し、wiki ページを作成・更新
-2. `agent-browser` を使って権威ある Web ソースを取得し、内容を補完
-3. ページ間に `[[双方向リンク]]` を構築
-4. 価値ある分析を `concepts/` に保存
+**コアアイデア：**
+- `WIKI.md` が canonical runtime contract
+- `skill/` が唯一の公開 wiki skill ディレクトリ
+- `config-dir` と `wiki-root` は完全に分離可能
+- `raw/` は不変のソース、`wiki/` は AI が保守する知識層
 
 ---
 
-## スクリーンショット
+## 実行モデル
 
-![LLM Wiki の使用例 — Claude Code で wiki のクエリと更新](assets/demo-screenshot.png)
+```text
+<config-dir>/
+└── WIKI.md            # 絶対 wiki_root を記録する実行時契約
+
+<wiki-root>/
+├── raw/               # 原本素材
+├── wiki/
+│   ├── index.md       # 全体インデックス
+│   ├── log.md         # 操作ログ
+│   └── pages/         # トピックページ
+└── concepts/          # 分析・回答・レポート
+```
+
+公開スキルは次の場所にあります：
+
+```text
+skill/
+├── wiki-init/
+├── wiki-ingest/
+├── wiki-query/
+├── wiki-lint/
+├── wiki-update/
+└── agent-browser/
+```
 
 ---
 
@@ -45,8 +49,8 @@ AI は処理中に以下を行います：
 
 ### 前提条件
 
-- [Claude Code](https://claude.ai/code) CLI
-- （任意）[agent-browser](https://github.com/mediar-ai/agent-browser)：Web検索強化に使用
+- 任意の `skill.io` 互換エージェント/ツール
+- （任意）[agent-browser](https://github.com/mediar-ai/agent-browser)：Web補完と検証に使用
   ```bash
   brew install mediar-ai/agent-browser/agent-browser
   ```
@@ -58,213 +62,109 @@ git clone https://github.com/crabin/llm-wiki.git my-wiki
 cd my-wiki
 ```
 
-Claude Code でプロジェクトを開く：
-```bash
-claude .
-```
-
-他の agent との互換運用では `AGENTS.md` と `.agents/skills/` を入口として使えます。Claude Code は引き続き `CLAUDE.md` と `.claude/skills/` を使用します。
+互換エージェントにこのリポジトリを読み込ませ、`skill/` 内の公開 wiki skill を参照できるようにします。
 
 ### 使い方
 
-1. **初期化**：Claude Code に「wiki を初期化して」と伝える（初回のみ）
-2. **素材を追加**：ノート、PDF、Webクリッピングを `raw/` の適切なサブディレクトリに配置
-3. **取り込み（Ingest）**：「raw/xxx.md を取り込んで」または URL/テキストを提供
-4. **クエリ（Query）**：直接質問するだけ — AI が wiki を参照して回答
-5. **ヘルスチェック（Lint）**：「wiki を確認して」と言うと、AI がリンク切れや孤立ページを検出し、skill の手順に従って修正案提示または修正を行う
+1. `wiki-init` を実行する
+2. `config-dir` を選ぶ（例：`~/wiki-config/personal-research`）
+3. `wiki-root` を選ぶ（例：`~/data/my-wiki`）
+4. `wiki-init` に `<config-dir>/WIKI.md` を生成させ、絶対 `wiki_root` を記録する
+5. 素材を `<wiki-root>/raw/` に置き、`wiki-ingest` を実行する
+6. `wiki-query`、`wiki-lint`、`wiki-update` で運用する
+
+実行時の探索順序：
+- ユーザーが明示した `config-dir` を最優先で使う
+- 指定がなければ current working directory から上方向に `WIKI.md` を探索する
+- 見つからなければ絶対 `config-dir` の入力を求めるか `wiki-init` を先に実行する
 
 ---
 
-## ディレクトリ構造
+## リポジトリ構造
 
-```
+```text
 llm-wiki/
-├── AGENTS.md          # クロスエージェント用の入口と互換ガイド
-├── CLAUDE.md          # Claude 専用の動作ルール（中核設定）
-├── .agents/
-│   └── skills/        # 他の agent/tools 向けの互換参照
-│       ├── agent-browser/
-│       ├── wiki-init/
-│       ├── wiki-ingest/
-│       ├── wiki-query/
-│       ├── wiki-lint/
-│       └── wiki-update/
-├── .claude/
-│   └── skills/        # canonical skill 定義
-│       ├── agent-browser/   # ブラウザ自動化
-│       ├── wiki-init/       # wiki 初期化
-│       ├── wiki-ingest/     # 新規取り込み
-│       ├── wiki-query/      # wiki クエリ
-│       ├── wiki-lint/       # ヘルスチェック
-│       └── wiki-update/     # ページ更新
-├── raw/               # 原本素材（読み取り専用、git には含めない）
-│   ├── Clippings/     # Webクリッピング
-│   ├── Notes/         # 学習ノート
-│   ├── Personal/      # 個人日記・メモ
-│   └── ...
-├── wiki/              # AI が管理する wiki ページ
-│   ├── index.md       # 全体インデックス（テーブル形式）
-│   ├── log.md         # 操作ログ（追記のみ）
-│   └── pages/         # トピックページ（1トピック1ファイル）
-│       ├── topic-a.md
-│       └── topic-b.md
-└── concepts/          # 生成された分析レポート・回答ページ
+├── skill/             # 唯一の公開 wiki skill ディレクトリ
+│   ├── wiki-init/
+│   ├── wiki-ingest/
+│   ├── wiki-query/
+│   ├── wiki-lint/
+│   ├── wiki-update/
+│   └── agent-browser/
+├── WIKI.md            # このリポジトリ実体用のランタイム契約
+├── raw/
+├── wiki/
+│   ├── index.md
+│   ├── log.md
+│   └── pages/
+├── concepts/
+├── README.md
+├── README.en.md
+└── README.ja.md
 ```
 
 ---
 
-## 5つの操作モード
+## Skill Asset Boundary
 
-### Init（初期化）
-
-初回使用時に wiki 構造を初期化：
-
-```
-あなた：wiki を初期化して
-AI：設定を確認 → ディレクトリ構造を作成 → CLAUDE.md と AGENTS.md を書く → index.md と log.md を初期化
-```
-
-### 取り込み（Ingest）
-
-```
-あなた：raw/notes/machine-learning.md を取り込んで
-AI：ファイルを読む → ユーザーと要点を議論 → Web で補完 → wiki ページを作成・更新 → 逆リンク監査 → index 更新 → log に記録
-```
-
-1回の取り込みで 5〜15 の関連ページに影響する場合があります。
-
-### クエリ（Query）
-
-```
-あなた：連合学習とは何ですか？プライバシー保護とどう関係していますか？
-AI：index を読む → 関連ページを読む → 必要なら Web 検索 → 回答を統合（引用付き）→ concepts/ への保存を提案
-```
-
-AI は常に wiki ページを先に読み、記憶から回答することはありません。
-
-### ヘルスチェック（Lint）
-
-```
-あなた：wiki を確認して
-AI：リンク切れ・孤立ページ・矛盾・古い記述をスキャン → 分類レポートを出力 → 修正を提案 → 修正を実行 → log に記録
-```
-
-5〜10回の取り込みごとに実行することを推奨。
-
-### 更新（Update）
-
-```
-あなた：xxx ページを更新して。新しい情報によると...
-AI：現在の内容を読む → 変更を提案（diff を表示）→ 確認後に書き込み → 下流への影響を確認 → index 更新 → log に記録
-```
-
-すべての変更にソースの引用が必要です。
+- 公開 wiki skill の境界ルールは `skill/ASSET-LAYOUT.md` を参照する
+- `skill-private asset` は owning `skill/<name>/` ディレクトリ配下に置く
+- `runtime` wiki object は `WIKI.md` と `wiki_root` 配下の `raw/`、`wiki/`、`concepts/` のまま維持する
+- 推奨される skill-local ディレクトリ名:
+  - `templates/`
+  - `examples/`
+  - `fixtures/`
+  - `assets/`
+  - `scripts/`
 
 ---
 
-## wiki ページのフォーマット
-
-すべての wiki ページは統一フォーマットに従います：
-
-```markdown
----
-title: トピック名
-tags: [tag1, tag2]
-sources: 3
-updated: 2026-04-06
----
-
-# トピック名
-
-**Source:** raw/xxx/yyy.md または https://example.com/article
-**Date ingested:** 2026-04-06
-**Type:** paper | article | transcript | code | other
-
-## 核心となる定義
-...
-
-## 重要なポイント
-- ...
-
-## 関連トピック
-- [[related-topic-a]] - 説明
-- [[related-topic-b]] - 説明
-
-## 未解決の問題
-<あれば>
-
-## ソース
-- ローカルファイル：raw/xxx/yyy.md
-- Webソース：https://example.com/article
-```
-
----
-
-## スキルリファレンス
-
-`AGENTS.md` と `.agents/skills/` は Claude 以外の agent 向け互換入口です。canonical な skill 定義は `.claude/skills/` にあります。
-
+## スキル説明
 
 ### wiki-init
 
-あらゆる知識ドメイン（研究、コードドキュメント、読書ノート、競合分析など）に対応する新しい wiki 知識ベースを初期化。対話形式で設定（パス、ドメイン、ソースタイプ、インデックスカテゴリ）を確認し、ディレクトリ構造を作成し、`CLAUDE.md`、`AGENTS.md`、`index.md`、`log.md` を書き、`.claude/skills/` を参照する `.agents/skills/` 互換レイヤーを用意する。
+- 独立した `config-dir` と `wiki-root` を収集する
+- 設定ディレクトリに `WIKI.md` を書く
+- `wiki-root` 配下に `raw/`、`wiki/index.md`、`wiki/log.md`、`wiki/pages/`、`concepts/` を初期化する
 
 ### wiki-ingest
 
-新規ソース（ファイル、URL、テキスト）を取り込む。主な流れ：
-1. ソースを全文読む（スキップしない）
-2. **書く前にまず議論**：ユーザーに3〜5つの重要ポイントを提示し、強調したい点を確認
-3. Web で補完（推奨）：`agent-browser` で権威あるソースを取得しコア概念を検証
-4. slug を生成し、wiki ページを書く・更新（ソース引用付き）
-5. 関連するエンティティ・概念ページを更新（存在しなければ作成）
-6. **逆リンク監査**（重要ステップ）：既存の全ページをスキャンし、新ページへのリンクを追加
-7. index と log を更新
+- 新規ソースを読み、先にユーザーと要点を議論する
+- `WIKI.md` から実行時パスを解決する
+- ページ、逆リンク、インデックス、ログを更新する
 
 ### wiki-query
 
-wiki をクエリして質問に回答。常に `wiki/index.md` と関連ページを先に読み、記憶からは回答しない。ローカル wiki の情報が不十分な場合、`agent-browser` で Web ソースを取得。ローカルページは `[[slug]]`、Webソースは URL で引用。回答後に `concepts/` への保存を**常に提案**。
+- 常に `wiki/index.md` と関連ページを先に読む
+- ローカル情報が不足する場合のみ `agent-browser` を使う
+- 価値のある回答は常に `concepts/` への保存を提案する
 
 ### wiki-lint
 
-ヘルスチェック。以下を検出：
-- 🔴 **エラー**：リンク切れ（`[[slug]]` が存在しないページを参照）、frontmatter 欠落
-- 🟡 **警告**：孤立ページ（インバウンドリンクゼロ）、矛盾、古い記述（90日以上未更新で「最新」等の語句を含む）
-- 🔵 **情報**：頻繁に参照されるが専用ページがない概念、欠落している相互参照
-
-レポートを `concepts/lint-<date>.md` に生成し、具体的な修正を提案（**diff を表示してから書き込み**）。
+- リンク切れ、孤立ページ、矛盾、古い記述を検出する
+- レポートを `concepts/lint-<date>.md` に出力する
+- 修正前に diff を表示する
 
 ### wiki-update
 
-既存の wiki ページを更新。流れ：
-1. 現在の内容を読み、変更前後の diff を表示（変更理由とソース引用付き）
-2. **ページごとに確認**してから書き込み — 一括適用しない
-3. **下流影響チェック**：更新ページを参照する他のページをスキャンし、同期が必要なものを通知
-4. **矛盾スイープ**：新情報が wiki 内容と矛盾する場合、矛盾する記述を含む全ページを検索し、すべて更新
-5. index と log を更新 — すべての変更にソースの引用が必要
+- 既存ページを更新する
+- ページごとに確認する
+- 下流影響を確認し、変更を必ず記録する
 
 ### agent-browser
 
-Web検索強化のためのブラウザ自動化。カテゴリ別に権威あるソースを優先：
-
-| カテゴリ | 優先ソース |
-|----------|------------|
-| 一般概念 | Wikipedia (en/zh) |
-| 技術/プログラミング | 公式ドキュメント, MDN, arxiv, GitHub |
-| AI/ML | arxiv, Papers with Code, Hugging Face |
-| 学術 | Google Scholar, Semantic Scholar |
-| 公式ドキュメント | 該当技術・製品の公式サイト |
+- Web取得とファクトチェックを担当する
+- 権威あるソースを優先する
+- wiki ワークフローが引用できる URL と本文を提供する
 
 ---
 
-## 設計思想
+## 設計原則
 
-**知識の複利効果**：取り込みは単なるアーカイブではなく、新しい知識を既存のネットワークに編み込む作業です。100回目の取り込み時、AI は新しいノートと50の既存ページとのつながりを発見できます。
-
-**原本は不変**：`raw/` は常にそのまま保持されます。wiki は AI の解釈レイヤーであり、原本の代替ではありません。
-
-**検証可能なソース**：すべてのページにソース（ローカルファイルパスまたは URL）を明記し、AI が根拠なく内容を生成することを防ぎます。
-
-**逆リンク優先**：新しいページを作成した後、AI はすべての既存ページをスキャンし、関連する場所に新しいページへのリンクを追加します。これが知識複利価値の鍵です。
+- **中立ランタイム**：実行時は `WIKI.md` に依存し、特定エージェント名には依存しない
+- **単一の公開能力面**：公開スキルは `skill/` のみで管理する
+- **知識の複利**：新しい知識は既存グラフへ接続する
+- **追跡可能なソース**：重要な主張はファイルパスか URL に結び付ける
 
 ---
 
