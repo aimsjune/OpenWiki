@@ -25,6 +25,15 @@ class SkillPrivateAssetsDocsTest(unittest.TestCase):
                 for directory_name in APPROVED_SKILL_LOCAL_DIRS:
                     self.assertIn(directory_name, content)
 
+    def test_readmes_document_fast_and_slow_e2e_commands(self) -> None:
+        for readme_name in README_FILES:
+            with self.subTest(readme=readme_name):
+                content = (REPO_ROOT / readme_name).read_text(encoding="utf-8")
+                self.assertIn("tests.test_wiki_skill_workflow_e2e", content)
+                self.assertIn("tests.test_agent_skill_smoke_e2e", content)
+                self.assertIn("SKILL_AGENT_E2E=1", content)
+                self.assertIn("SKILL_AGENT_RUNNER", content)
+
 
 if __name__ == "__main__":
     unittest.main()

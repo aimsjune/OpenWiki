@@ -78,6 +78,26 @@ Runtime discovery order:
 - otherwise search upward from the current working directory for `WIKI.md`
 - if still missing, ask for an absolute config-dir or run `wiki-init`
 
+### E2E Testing
+
+- Fast deterministic artifact E2E:
+  ```bash
+  python3 -m unittest tests.test_wiki_skill_workflow_e2e -v
+  ```
+- Full fast test suite:
+  ```bash
+  python3 -m unittest discover -s tests -p "test_*.py"
+  ```
+- Slow real-agent smoke E2E:
+  ```bash
+  SKILL_AGENT_E2E=1 SKILL_AGENT_RUNNER=/path/to/compatible-agent-wrapper python3 -m unittest tests.test_agent_skill_smoke_e2e -v
+  ```
+
+Notes:
+- `tests.test_wiki_skill_workflow_e2e` uses only local fixtures and temporary directories, with no network dependency.
+- `tests.test_agent_skill_smoke_e2e` skips the real runner scenario by default and only executes it when `SKILL_AGENT_E2E=1` is set.
+- `SKILL_AGENT_RUNNER` must point to an executable compatible wrapper, using either an absolute path or a path relative to the repository root.
+
 ---
 
 ## Repository Layout

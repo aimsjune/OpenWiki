@@ -78,6 +78,26 @@ cd my-wiki
 - 如果没有提供，则从 current working directory 向上搜索 `WIKI.md`
 - 仍找不到时，要求用户提供绝对 `config-dir` 或先运行 `wiki-init`
 
+### E2E 测试
+
+- 快速 deterministic Artifact E2E：
+  ```bash
+  python3 -m unittest tests.test_wiki_skill_workflow_e2e -v
+  ```
+- 全量 fast 测试：
+  ```bash
+  python3 -m unittest discover -s tests -p "test_*.py"
+  ```
+- 慢速真实 agent smoke E2E：
+  ```bash
+  SKILL_AGENT_E2E=1 SKILL_AGENT_RUNNER=/path/to/compatible-agent-wrapper python3 -m unittest tests.test_agent_skill_smoke_e2e -v
+  ```
+
+说明：
+- `tests.test_wiki_skill_workflow_e2e` 只依赖本地夹具和临时目录，不需要网络。
+- `tests.test_agent_skill_smoke_e2e` 默认会跳过真实 runner 用例；只有设置 `SKILL_AGENT_E2E=1` 后才执行。
+- `SKILL_AGENT_RUNNER` 需要指向一个可执行的兼容 wrapper，可使用绝对路径，也可使用相对于仓库根目录的路径。
+
 ---
 
 ## 目录结构

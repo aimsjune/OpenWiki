@@ -15,6 +15,10 @@ def _resolve_runner() -> str:
         raise RuntimeError("SKILL_AGENT_RUNNER must point to an executable runner path")
 
     runner_path = Path(runner).expanduser()
+    if not runner_path.is_absolute():
+        runner_path = (REPO_ROOT / runner_path).resolve()
+    else:
+        runner_path = runner_path.resolve()
     if not runner_path.exists():
         raise RuntimeError(f"SKILL_AGENT_RUNNER path does not exist: {runner_path}")
     if not runner_path.is_file() or not os.access(runner_path, os.X_OK):

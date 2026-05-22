@@ -78,6 +78,26 @@ cd my-wiki
 - 指定がなければ current working directory から上方向に `WIKI.md` を探索する
 - 見つからなければ絶対 `config-dir` の入力を求めるか `wiki-init` を先に実行する
 
+### E2E テスト
+
+- 高速 deterministic Artifact E2E:
+  ```bash
+  python3 -m unittest tests.test_wiki_skill_workflow_e2e -v
+  ```
+- 全 fast テスト:
+  ```bash
+  python3 -m unittest discover -s tests -p "test_*.py"
+  ```
+- 低速な実 agent smoke E2E:
+  ```bash
+  SKILL_AGENT_E2E=1 SKILL_AGENT_RUNNER=/path/to/compatible-agent-wrapper python3 -m unittest tests.test_agent_skill_smoke_e2e -v
+  ```
+
+メモ:
+- `tests.test_wiki_skill_workflow_e2e` はローカル fixture と一時ディレクトリだけを使い、ネットワーク依存はありません。
+- `tests.test_agent_skill_smoke_e2e` はデフォルトで実 runner 用ケースを skip し、`SKILL_AGENT_E2E=1` を設定したときだけ実行します。
+- `SKILL_AGENT_RUNNER` は実行可能な互換 wrapper を指す必要があり、絶対パスでもリポジトリルート相対パスでも指定できます。
+
 ---
 
 ## リポジトリ構造

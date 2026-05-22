@@ -4,7 +4,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from tests.e2e.agent_harness import run_agent_prompt
+from tests.e2e.agent_harness import REPO_ROOT, run_agent_prompt
 from tests.e2e.harness import build_temp_instance, fixture_path
 
 
@@ -38,6 +38,27 @@ class AgentSkillSmokeE2ETest(unittest.TestCase):
                         "Agent runner timed out",
                     ):
                         run_agent_prompt("Use skill wiki-query.")
+
+    def test_run_agent_prompt_resolves_relative_runner_from_repo_root(self) -> None:
+        with TemporaryDirectory(dir=REPO_ROOT) as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            runner_path = temp_dir / "echo-runner.sh"
+            runner_path.write_text("#!/bin/sh\ncat\n", encoding="utf-8")
+            runner_path.chmod(0o755)
+            relative_runner = runner_path.relative_to(REPO_ROOT)
+            original_cwd = Path.cwd()
+            os.chdir("/tmp")
+            self.addCleanup(os.chdir, original_cwd)
+
+            with patch.dict(
+                os.environ,
+                {"SKILL_AGENT_RUNNER": str(relative_runner)},
+                clear=False,
+            ):
+                result = run_agent_prompt("Use skill wiki-query.")
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual("Use skill wiki-query.", result.stdout.strip())
 
     def test_real_agent_runs_minimal_skill_workflow(self) -> None:
         if os.environ.get("SKILL_AGENT_E2E") != "1":
