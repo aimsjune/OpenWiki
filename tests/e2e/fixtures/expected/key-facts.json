@@ -1,0 +1,12 @@
+{
+  "title": "Local-First Wiki Testing",
+  "slug": "local-first-wiki-testing",
+  "facts": [
+    "Artifact E2E runs without network access.",
+    "Agent Smoke E2E validates a real compatible agent."
+  ],
+  "updated_fact": {
+    "old": "The first version excludes wiki-lint.",
+    "new": "The update now covers wiki-lint in a later phase."
+  }
+}
