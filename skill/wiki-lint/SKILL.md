@@ -12,8 +12,11 @@ Audit the wiki. Produce a categorized report. Offer concrete fixes. Log the oper
 Use this discovery order for the configuration directory:
 
 1. If the user explicitly provides a `config-dir`, use it.
-2. Otherwise, search upward from the current working directory for `WIKI.md`.
-3. If `WIKI.md` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
+2. Otherwise, check `~/.wiki-config/WIKI.md`. If it exists and is valid, use it as the default wiki config.
+3. If the default config is not found or invalid, search upward from the current working directory for `WIKI.md`.
+4. If `WIKI.md` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
+
+If the default wiki config at `~/.wiki-config` is used, tell the user you are using the default wiki config.
 
 Read `WIKI.md` to resolve the absolute `wiki_root` plus:
 

@@ -67,7 +67,7 @@ cd my-wiki
 ### 开始使用
 
 1. **初始化**：运行 `wiki-init`
-2. **指定配置目录**：例如 `~/wiki-config/personal-research`
+2. **指定配置目录**：例如 `~/.wiki-config`
 3. **指定 wiki 根目录**：例如 `~/data/my-wiki`，可与 `config-dir` 分离
 4. **生成契约**：`wiki-init` 会在 `<config-dir>/WIKI.md` 中写入绝对 `wiki_root`
 5. **开始摄入**：将素材放入 `<wiki-root>/raw/`，再运行 `wiki-ingest`
@@ -75,8 +75,11 @@ cd my-wiki
 
 运行时查找规则：
 - 优先使用用户显式提供的 `config-dir`
-- 如果没有提供，则从 current working directory 向上搜索 `WIKI.md`
+- 否则检查默认配置目录 `~/.wiki-config/WIKI.md`
+- 如果默认目录未初始化或无效，从 current working directory 向上搜索 `WIKI.md`
 - 仍找不到时，要求用户提供绝对 `config-dir` 或先运行 `wiki-init`
+
+如果显式提供的 `config-dir` 已经包含有效 `WIKI.md`，`wiki-init` 会提示“已连接现有 wiki”，复用同一份运行时配置，并建议继续使用同一个 `config-dir` 运行 `wiki-query`、`wiki-ingest`、`wiki-lint`、`wiki-update`。
 
 ### E2E 测试
 
@@ -97,6 +100,7 @@ cd my-wiki
 - `tests.test_wiki_skill_workflow_e2e` 只依赖本地夹具和临时目录，不需要网络。
 - `tests.test_agent_skill_smoke_e2e` 默认会跳过真实 runner 用例；只有设置 `SKILL_AGENT_E2E=1` 后才执行。
 - `SKILL_AGENT_RUNNER` 需要指向一个可执行的兼容 wrapper，可使用绝对路径，也可使用相对于仓库根目录的路径。
+- 兼容 wrapper 协议：无额外参数启动，从 `stdin` 读取 prompt，把结果写到 `stdout`；默认在仓库根目录下执行，但 smoke 用例可能覆盖工作目录以验证 `WIKI.md` 的向上发现逻辑。
 
 ---
 

@@ -67,7 +67,7 @@ Load the repository into your compatible agent and ensure it can read the public
 ### Usage
 
 1. Run `wiki-init`
-2. Choose a `config-dir`, such as `~/wiki-config/personal-research`
+2. Choose a `config-dir`, such as `~/.wiki-config`
 3. Choose a `wiki-root`, such as `~/data/my-wiki`
 4. Let `wiki-init` write `<config-dir>/WIKI.md` with an absolute `wiki_root`
 5. Put source material into `<wiki-root>/raw/` and run `wiki-ingest`
@@ -75,8 +75,11 @@ Load the repository into your compatible agent and ensure it can read the public
 
 Runtime discovery order:
 - prefer an explicitly provided `config-dir`
-- otherwise search upward from the current working directory for `WIKI.md`
+- otherwise check the default config directory at `~/.wiki-config/WIKI.md`
+- if the default config is not found or invalid, search upward from the current working directory for `WIKI.md`
 - if still missing, ask for an absolute config-dir or run `wiki-init`
+
+If the explicitly provided `config-dir` already contains a valid `WIKI.md`, `wiki-init` should say it is connected to the existing wiki, reuse that runtime contract, and suggest continuing with the same `config-dir` in `wiki-query`, `wiki-ingest`, `wiki-lint`, and `wiki-update`.
 
 ### E2E Testing
 
@@ -97,6 +100,7 @@ Notes:
 - `tests.test_wiki_skill_workflow_e2e` uses only local fixtures and temporary directories, with no network dependency.
 - `tests.test_agent_skill_smoke_e2e` skips the real runner scenario by default and only executes it when `SKILL_AGENT_E2E=1` is set.
 - `SKILL_AGENT_RUNNER` must point to an executable compatible wrapper, using either an absolute path or a path relative to the repository root.
+- Compatible wrapper contract: start with no extra arguments, read the prompt from `stdin`, and write results to `stdout`; by default it runs inside the `repository root`, but smoke tests may override the working directory to validate upward `WIKI.md` discovery.
 
 ---
 

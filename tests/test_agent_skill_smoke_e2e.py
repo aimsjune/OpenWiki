@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -60,6 +61,23 @@ class AgentSkillSmokeE2ETest(unittest.TestCase):
         self.assertEqual(0, result.returncode)
         self.assertEqual("Use skill wiki-query.", result.stdout.strip())
 
+    def test_run_agent_prompt_uses_requested_working_directory(self) -> None:
+        with TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            runner_path = temp_dir / "pwd-runner.sh"
+            runner_path.write_text("#!/bin/sh\npwd\n", encoding="utf-8")
+            runner_path.chmod(0o755)
+
+            with patch.dict(
+                os.environ,
+                {"SKILL_AGENT_RUNNER": str(runner_path)},
+                clear=False,
+            ):
+                result = run_agent_prompt("Use skill wiki-init.", cwd=temp_dir)
+
+        self.assertEqual(0, result.returncode)
+        self.assertEqual(str(temp_dir.resolve()), str(Path(result.stdout.strip()).resolve()))
+
     def test_real_agent_runs_minimal_skill_workflow(self) -> None:
         if os.environ.get("SKILL_AGENT_E2E") != "1":
             self.skipTest("set SKILL_AGENT_E2E=1 to enable slow real-agent smoke test")
@@ -106,6 +124,7 @@ class AgentSkillSmokeE2ETest(unittest.TestCase):
         self.assertEqual(0, query_result.returncode, query_result.stderr)
         self.assertTrue(query_result.stdout.strip())
         self.assertIn("local-first-wiki-testing", query_result.stdout.lower())
+        self.assertIn("worth saving", query_result.stdout.lower())
         log_path = instance.wiki_root / "wiki" / "log.md"
         self.assertTrue(log_path.exists())
         self.assertIn("query |", log_path.read_text(encoding="utf-8"))
@@ -120,11 +139,92 @@ class AgentSkillSmokeE2ETest(unittest.TestCase):
         )
         update_result = run_agent_prompt(update_prompt)
         self.assertEqual(0, update_result.returncode, update_result.stderr)
+        self.assertIn("current:", update_result.stdout.lower())
+        self.assertIn("proposed:", update_result.stdout.lower())
+        self.assertIn("reason:", update_result.stdout.lower())
+        self.assertIn("source:", update_result.stdout.lower())
 
         self.assertTrue(page_path.exists())
         page_md = page_path.read_text(encoding="utf-8")
         self.assertIn("The update now covers wiki-lint in a later phase.", page_md)
-        self.assertIn("update |", log_path.read_text(encoding="utf-8"))
+        log_md = log_path.read_text(encoding="utf-8")
+        self.assertIn("update |", log_md)
+        self.assertIn("reason", log_md.lower())
+        self.assertIn("source", log_md.lower())
+
+    def test_real_agent_discovers_config_dir_from_current_working_directory(self) -> None:
+        if os.environ.get("SKILL_AGENT_E2E") != "1":
+            self.skipTest("set SKILL_AGENT_E2E=1 to enable slow real-agent smoke test")
+
+        instance = build_temp_instance()
+        self.addCleanup(instance.temp_dir.cleanup)
+        fixture_root = fixture_path()
+
+        init_prompt = (
+            "Use skill wiki-init. "
+            f"Create config-dir {instance.config_dir} and wiki-root {instance.wiki_root}. "
+            "Domain: E2E testing knowledge base. "
+            "Source types: notes, articles. "
+            "Categories: Wiki Pages, Concepts Pages, Topic Relations, Quick Navigation."
+        )
+        init_result = run_agent_prompt(init_prompt)
+        self.assertEqual(0, init_result.returncode, init_result.stderr)
+
+        nested_work_dir = instance.config_dir / "nested" / "workspace"
+        nested_work_dir.mkdir(parents=True, exist_ok=True)
+        source_path = fixture_root / "source.md"
+        ingest_prompt = (
+            "Use skill wiki-ingest. "
+            f"Ingest local file {source_path}. "
+            "Do not use network or agent-browser; use only local fixtures and local wiki state."
+        )
+        ingest_result = run_agent_prompt(ingest_prompt, cwd=nested_work_dir)
+        self.assertEqual(0, ingest_result.returncode, ingest_result.stderr)
+
+        page_path = instance.wiki_root / "wiki" / "pages" / "local-first-wiki-testing.md"
+        self.assertTrue(page_path.exists())
+
+    def test_real_agent_uses_default_config_dir_when_no_explicit_config_dir(self) -> None:
+        if os.environ.get("SKILL_AGENT_E2E") != "1":
+            self.skipTest("set SKILL_AGENT_E2E=1 to enable slow real-agent smoke test")
+
+        instance = build_temp_instance()
+        self.addCleanup(instance.temp_dir.cleanup)
+
+        init_prompt = (
+            "Use skill wiki-init. "
+            f"Create config-dir {instance.config_dir} and wiki-root {instance.wiki_root}. "
+            "Domain: E2E testing knowledge base. "
+            "Source types: notes, articles. "
+            "Categories: Wiki Pages, Concepts Pages, Topic Relations, Quick Navigation."
+        )
+        init_result = run_agent_prompt(init_prompt)
+        self.assertEqual(0, init_result.returncode, init_result.stderr)
+
+        simulated_home = instance.temp_root / "simulated-home"
+        simulated_home.mkdir(parents=True, exist_ok=True)
+        default_config_dir = simulated_home / ".wiki-config"
+        shutil.copytree(str(instance.config_dir), str(default_config_dir))
+        self.assertTrue((default_config_dir / "WIKI.md").exists())
+
+        work_dir = instance.temp_root / "some-random-workdir"
+        work_dir.mkdir(parents=True, exist_ok=True)
+
+        with patch.dict(os.environ, {"HOME": str(simulated_home)}, clear=False):
+            query_result = run_agent_prompt(
+                "Use skill wiki-query. "
+                "Question: What testing layers exist? "
+                "Answer only from the local wiki and do not use network or agent-browser.",
+                cwd=work_dir,
+            )
+
+        self.assertEqual(0, query_result.returncode, query_result.stderr)
+        output_lower = query_result.stdout.lower()
+        self.assertTrue(
+            "default wiki config" in output_lower
+            or ".wiki-config" in output_lower,
+            f"agent output should mention default config usage: {query_result.stdout[:500]}",
+        )
 
 
 if __name__ == "__main__":

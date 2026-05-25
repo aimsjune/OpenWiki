@@ -149,12 +149,15 @@ class WikiSkillWorkflowE2ETest(unittest.TestCase):
         self.assertIn("[[local-first-wiki-testing]]", answer)
         self.assertIn("Artifact E2E runs without network access.", answer)
         self.assertIn("Agent Smoke E2E validates a real compatible agent.", answer)
+        self.assertIn("Worth saving to `concepts/local-first-wiki-testing.md`?", answer)
         self.assertIn("The update now covers wiki-lint in a later phase.", page_md)
         self.assertNotIn("The first version excludes wiki-lint.", page_md)
         self.assertIn("ingest | Local-First Wiki Testing", log_md)
         self.assertIn("query | local-first-wiki-testing", log_md)
         self.assertIn("Pages read: local-first-wiki-testing", log_md)
         self.assertIn("update | local-first-wiki-testing", log_md)
+        self.assertIn("Reason: fixture-driven update", log_md)
+        self.assertIn("Source: raw/local-first-wiki-testing-source.md", log_md)
 
     def test_query_requires_existing_wiki_state(self) -> None:
         instance = build_temp_instance()

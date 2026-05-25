@@ -67,7 +67,7 @@ cd my-wiki
 ### 使い方
 
 1. `wiki-init` を実行する
-2. `config-dir` を選ぶ（例：`~/wiki-config/personal-research`）
+2. `config-dir` を選ぶ（例：`~/.wiki-config`）
 3. `wiki-root` を選ぶ（例：`~/data/my-wiki`）
 4. `wiki-init` に `<config-dir>/WIKI.md` を生成させ、絶対 `wiki_root` を記録する
 5. 素材を `<wiki-root>/raw/` に置き、`wiki-ingest` を実行する
@@ -75,8 +75,11 @@ cd my-wiki
 
 実行時の探索順序：
 - ユーザーが明示した `config-dir` を最優先で使う
-- 指定がなければ current working directory から上方向に `WIKI.md` を探索する
+- なければデフォルト設定ディレクトリ `~/.wiki-config/WIKI.md` を確認する
+- デフォルト設定がないか無効な場合、current working directory から上方向に `WIKI.md` を探索する
 - 見つからなければ絶対 `config-dir` の入力を求めるか `wiki-init` を先に実行する
+
+明示的に指定された `config-dir` に有効な `WIKI.md` がすでにある場合、`wiki-init` は「既存の wiki に接続」したことを案内し、そのランタイム契約を再利用したうえで、同じ `config-dir` を `wiki-query`、`wiki-ingest`、`wiki-lint`、`wiki-update` に続けて使えると案内します。
 
 ### E2E テスト
 
@@ -97,6 +100,7 @@ cd my-wiki
 - `tests.test_wiki_skill_workflow_e2e` はローカル fixture と一時ディレクトリだけを使い、ネットワーク依存はありません。
 - `tests.test_agent_skill_smoke_e2e` はデフォルトで実 runner 用ケースを skip し、`SKILL_AGENT_E2E=1` を設定したときだけ実行します。
 - `SKILL_AGENT_RUNNER` は実行可能な互換 wrapper を指す必要があり、絶対パスでもリポジトリルート相対パスでも指定できます。
+- 互換 wrapper の契約: 追加引数なしで起動し、prompt を `stdin` から読み、結果を `stdout` に書くこと。デフォルトではリポジトリルートで実行されますが、smoke テストでは `WIKI.md` の上方向探索を検証するために作業ディレクトリを上書きする場合があります。
 
 ---
 

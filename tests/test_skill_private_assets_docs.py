@@ -5,6 +5,11 @@ import unittest
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 README_FILES = ("README.md", "README.en.md", "README.ja.md")
+EXPECTED_CWD_PHRASE = {
+    "README.md": "仓库根目录",
+    "README.en.md": "repository root",
+    "README.ja.md": "リポジトリルート",
+}
 APPROVED_SKILL_LOCAL_DIRS = (
     "templates/",
     "examples/",
@@ -33,6 +38,9 @@ class SkillPrivateAssetsDocsTest(unittest.TestCase):
                 self.assertIn("tests.test_agent_skill_smoke_e2e", content)
                 self.assertIn("SKILL_AGENT_E2E=1", content)
                 self.assertIn("SKILL_AGENT_RUNNER", content)
+                self.assertIn("stdin", content)
+                self.assertIn("stdout", content)
+                self.assertIn(EXPECTED_CWD_PHRASE[readme_name], content)
 
 
 if __name__ == "__main__":

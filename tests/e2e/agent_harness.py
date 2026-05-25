@@ -26,7 +26,11 @@ def _resolve_runner() -> str:
     return str(runner_path)
 
 
-def run_agent_prompt(prompt: str) -> subprocess.CompletedProcess[str]:
+def run_agent_prompt(
+    prompt: str,
+    *,
+    cwd: Path | None = None,
+) -> subprocess.CompletedProcess[str]:
     runner = _resolve_runner()
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
@@ -36,7 +40,7 @@ def run_agent_prompt(prompt: str) -> subprocess.CompletedProcess[str]:
             input=prompt,
             text=True,
             capture_output=True,
-            cwd=REPO_ROOT,
+            cwd=cwd or REPO_ROOT,
             env=env,
             check=False,
             timeout=AGENT_RUN_TIMEOUT_SECONDS,

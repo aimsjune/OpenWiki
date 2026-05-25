@@ -287,7 +287,8 @@ def run_query_reference(*, instance: TempWikiInstance, fixture_root: Path) -> st
 
     answer = (
         f"{page_link} says {takeaways[0]} "
-        f"and {takeaways[1]}"
+        f"and {takeaways[1]}\n\n"
+        f"Worth saving to `concepts/{slug}.md`?"
     )
     log_path = instance.wiki_root / "wiki" / "log.md"
     log_md = log_path.read_text(encoding="utf-8")
@@ -332,6 +333,8 @@ def run_update_reference(*, instance: TempWikiInstance, fixture_root: Path, slug
     log_md = log_path.read_text(encoding="utf-8")
     log_md += (
         f"\n## [2026-05-23] update | {slug}\n"
+        "- Reason: fixture-driven update\n"
+        f"- Source: raw/{slug}-source.md\n"
         f"- Replaced fact: {expected['updated_fact']['new']}\n"
     )
     log_path.write_text(log_md, encoding="utf-8")
