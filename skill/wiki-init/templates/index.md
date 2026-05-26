@@ -1,17 +1,21 @@
-# Index
+# 索引
 
 ## <category_1>
-| Page | Summary | Tags | Last Updated |
-|------|---------|------|--------------|
-<!-- entries added by wiki-ingest -->
+
+| 页面 | 摘要 | 标签 | 最后更新 |
+|------|------|------|----------|
+| <!-- wiki-ingest 自动填充 --> | | | |
 
 ## <category_2>
-| Page | Type | Date |
+
+| 页面 | 类型 | 日期 |
 |------|------|------|
-| (No saved analysis pages yet) | - | - |
+| （暂无分析页面） | - | - |
 
 ## <category_3>
-(To be populated)
+
+（待填充）
 
 ## <category_4>
-(To be populated)
+
+（待填充）

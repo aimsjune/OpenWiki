@@ -1,6 +1,8 @@
 ---
 wiki_root: /Users/bytedance/git/llm-wiki
 domain: AI-maintained personal wiki scaffold
+primary_language: zh
+secondary_language: en
 source_types:
   - notes
   - web-clippings

@@ -21,7 +21,7 @@ Check whether a `WIKI.md` already exists in the target configuration directory.
 If the workflow is reusing an existing `WIKI.md`:
 
 - Read the existing contract first.
-- skip asking for `wiki_root`, `domain`, `source_types`, `index_categories`, `remote_sync_path`, and `auto_sync` when they are already present in `WIKI.md`.
+- skip asking for `wiki_root`, `domain`, `source_types`, `index_categories`, `remote_sync_path`, `auto_sync`, `primary_language`, and `secondary_language` when they are already present in `WIKI.md`.
 - only ask for fields that are still missing from the existing contract.
 
 If the workflow is creating a new wiki instance:
@@ -33,8 +33,9 @@ Ask:
 1. **Where should the configuration directory live?** (absolute path, e.g. `~/.wiki-config`)
 2. **Where should the wiki root directory live?** (absolute path, may be different from the configuration directory)
 3. **What is the domain/purpose?** (one sentence)
-4. **What types of sources will you add?** (papers, URLs, code files, transcripts, etc.)
-5. **What categories should `index.md` use?**
+4. **What are the primary and secondary languages?** (e.g. `zh` / `en`, defaults: `zh` / `en`)
+5. **What types of sources will you add?** (papers, URLs, code files, transcripts, etc.)
+6. **What categories should `index.md` use?**
    - Research default: `Wiki Pages | Concepts Pages | Topic Relations | Quick Navigation`
    - Codebase default: `Modules | APIs | Decisions | Flows`
    - Or specify custom

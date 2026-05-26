@@ -24,6 +24,8 @@ Read `WIKI.md` to resolve the absolute `wiki_root` plus:
 - `wiki/log.md`
 - `wiki/pages/`
 - `concepts/`
+- `primary_language`
+- `secondary_language`
 
 Do not depend on legacy agent-specific files or compatibility directories.
 
@@ -49,6 +51,12 @@ Read `wiki/index.md` and all files in `wiki/pages/`. Build a map of:
 - orphan pages
 - contradictions
 - stale claims
+- content-not-chinese-primary — 页面正文中文占比低于 60%。排除：代码块（` ```...``` `）、行内代码（`` `code` ``）、URL（`https://...`）、YAML frontmatter（`---...---`）、术语首次标注括号内英文（`中文术语（English）`）
+- missing-chinese-title — h1 标题不包含任何中文字符。仅检查 Markdown h1，不检查 frontmatter 中的 `title` 字段
+- missing-term-glossary — 英文多词术语（2 个及以上单词）在页面中首次出现时未附中文解释。支持两种标注形式：`中文术语（English Term）` 或 `English Term（中文术语）`。单字术语（如 "Go"、"Rust"）不触发
+- missing-bilingual-tags — frontmatter 中 `tags` 仅有英文标签无中文标签。仅当 `primary_language` 为 `zh` 且 `secondary_language` 为 `en` 时启用。只要存在任意中文标签即满足
+
+**语言规则启用条件**：仅当 `WIKI.md` 中 `primary_language` 为 `zh` 时启用以上 4 条语言规则。若 `primary_language` 不为 `zh`，跳过全部语言规则。若 `WIKI.md` 不含 `primary_language` 字段（旧格式），默认视为 `zh`。
 
 **Blue Info**
 

@@ -1,6 +1,8 @@
 ---
 wiki_root: /absolute/path/to/wiki-root
 domain: <user domain description>
+primary_language: zh
+secondary_language: en
 source_types:
   - papers
   - urls

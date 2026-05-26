@@ -71,7 +71,11 @@ For core concepts or key claims, use `agent-browser` to fetch current authoritat
 ### 5. Generate the slug
 
 Lowercase, hyphens, no special characters.
-Example: `Attention Is All You Need` -> `attention-is-all-you-need`
+
+- **英文源标题**：直接 slugify。
+  Example: `Attention Is All You Need` -> `attention-is-all-you-need`
+- **中文源标题**：翻译为英文后 slugify，不使用拼音。
+  Example: `依赖注入模式` -> `dependency-injection-pattern`（非 `yi-lai-zhu-ru-mo-shi`）
 
 ### 6. Write or update wiki pages
 
@@ -87,23 +91,23 @@ updated: <today>
 
 # <Source Title>
 
-**Source:** <original URL or local path>
-**Date ingested:** <today>
-**Type:** <paper | article | transcript | code | other>
+**来源：** <original URL or local path>
+**摄入日期：** <today>
+**类型：** <paper | article | transcript | code | other>
 
-## Core Definition
+## 核心定义
 
 <Definition of core concepts>
 
-## Key Takeaways
+## 关键要点
 
 - <bullet>
 
-## Related Topics
+## 相关主题
 
 - [[related-slug]] — <relationship>
 
-## Open Questions
+## 开放问题
 
 <If any>
 ```
