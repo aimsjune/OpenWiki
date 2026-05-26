@@ -21,7 +21,7 @@ Check whether a `WIKI.md` already exists in the target configuration directory.
 If the workflow is reusing an existing `WIKI.md`:
 
 - Read the existing contract first.
-- skip asking for `wiki_root`, `domain`, `source_types`, and `index_categories` when they are already present in `WIKI.md`.
+- skip asking for `wiki_root`, `domain`, `source_types`, `index_categories`, `remote_sync_path`, and `auto_sync` when they are already present in `WIKI.md`.
 - only ask for fields that are still missing from the existing contract.
 
 If the workflow is creating a new wiki instance:
@@ -91,7 +91,7 @@ Write `wiki_root/wiki/log.md` from the local starter template at `skill/wiki-ini
 Tell the user:
 
 - If an existing config was reused, say the workflow is connected to the existing wiki.
-- Show the resolved `wiki_root`, plus any available `domain`, `source_types`, and `index_categories` from `WIKI.md`.
+- Show the resolved `wiki_root`, plus any available `domain`, `source_types`, `index_categories`, `remote_sync_path`, and `auto_sync` from `WIKI.md`.
 - Tell the user they can keep using the same `config-dir` with `wiki-query`, `wiki-ingest`, `wiki-lint`, and `wiki-update`.
 - Configuration initialized at `<config-dir>/WIKI.md`
 - Wiki data initialized under `<wiki-root>`

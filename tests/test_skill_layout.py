@@ -14,6 +14,7 @@ class SkillLayoutTest(unittest.TestCase):
             "wiki-query",
             "wiki-lint",
             "wiki-update",
+            "wiki-distill",
             "agent-browser",
         )
 

@@ -9,6 +9,8 @@ index_categories:
   - <category_2>
   - <category_3>
   - <category_4>
+remote_sync_path: wiki
+auto_sync: false
 ---
 
 # WIKI

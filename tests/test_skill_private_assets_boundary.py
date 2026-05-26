@@ -12,6 +12,7 @@ PUBLIC_WIKI_SKILLS = (
     "wiki-query",
     "wiki-lint",
     "wiki-update",
+    "wiki-distill",
 )
 
 ALLOWED_RUNTIME_REFERENCES = (

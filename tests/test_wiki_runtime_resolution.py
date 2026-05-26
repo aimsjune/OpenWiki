@@ -6,10 +6,36 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 _DEFAULT_CONFIG_DIR = "~/.wiki-config"
 
+_WORKFLOW_SKILLS = ("wiki-ingest", "wiki-query", "wiki-lint", "wiki-update", "wiki-distill")
+
+
+def _workspace_phrase(skill_name: str) -> str:
+    if skill_name == "wiki-distill":
+        return "当前工作目录"
+    return "current working directory"
+
+
+def _absolute_config_phrase(skill_name: str) -> str:
+    if skill_name == "wiki-distill":
+        return "绝对 `config-dir`"
+    return "absolute config-dir"
+
+
+def _default_config_phrase(skill_name: str) -> str:
+    if skill_name == "wiki-distill":
+        return "wiki/.wiki-config"
+    return _DEFAULT_CONFIG_DIR
+
+
+def _default_communication_phrases(skill_name: str) -> tuple[str, str]:
+    if skill_name == "wiki-distill":
+        return ("默认 wiki 配置", "告知用户")
+    return ("default wiki config", "tell the user")
+
 
 class WikiRuntimeResolutionTest(unittest.TestCase):
     def test_wiki_workflow_skills_resolve_runtime_from_wiki_md(self) -> None:
-        for skill_name in ("wiki-ingest", "wiki-query", "wiki-lint", "wiki-update"):
+        for skill_name in _WORKFLOW_SKILLS:
             with self.subTest(skill=skill_name):
                 skill_path = REPO_ROOT / "skill" / skill_name / "SKILL.md"
                 self.assertTrue(
@@ -25,44 +51,47 @@ class WikiRuntimeResolutionTest(unittest.TestCase):
                 self.assertNotIn(".agents/skills/", content)
                 self.assertIn("wiki/index.md", content)
                 self.assertIn("wiki/log.md", content)
-                self.assertIn("current working directory", content)
-                self.assertIn("absolute config-dir", content)
+                self.assertIn(_workspace_phrase(skill_name), content)
+                self.assertIn(_absolute_config_phrase(skill_name), content)
 
     def test_wiki_workflows_include_default_config_dir_in_discovery_order(self) -> None:
-        for skill_name in ("wiki-ingest", "wiki-query", "wiki-lint", "wiki-update"):
+        for skill_name in _WORKFLOW_SKILLS:
             with self.subTest(skill=skill_name):
                 skill_path = REPO_ROOT / "skill" / skill_name / "SKILL.md"
                 content = skill_path.read_text(encoding="utf-8")
+                config_phrase = _default_config_phrase(skill_name)
                 self.assertIn(
-                    _DEFAULT_CONFIG_DIR,
+                    config_phrase,
                     content,
-                    f"{skill_name} SKILL.md should mention {_DEFAULT_CONFIG_DIR} "
+                    f"{skill_name} SKILL.md should mention {config_phrase} "
                     "in discovery order",
                 )
 
-                default_pos = content.index(_DEFAULT_CONFIG_DIR)
-                workspace_pos = content.index("current working directory")
+                default_pos = content.index(config_phrase)
+                workspace_phrase = _workspace_phrase(skill_name)
+                workspace_pos = content.index(workspace_phrase)
                 self.assertLess(
                     default_pos,
                     workspace_pos,
-                    f"{skill_name}: {_DEFAULT_CONFIG_DIR} should appear "
+                    f"{skill_name}: {config_phrase} should appear "
                     "before workspace discovery",
                 )
 
     def test_default_config_dir_usage_is_communicated_to_user(self) -> None:
-        for skill_name in ("wiki-ingest", "wiki-query", "wiki-lint", "wiki-update"):
+        for skill_name in _WORKFLOW_SKILLS:
             with self.subTest(skill=skill_name):
                 skill_path = REPO_ROOT / "skill" / skill_name / "SKILL.md"
                 content = skill_path.read_text(encoding="utf-8")
+                default_phrase, tell_phrase = _default_communication_phrases(skill_name)
                 self.assertIn(
-                    "default wiki config",
-                    content.lower(),
-                    f"{skill_name} SKILL.md should mention 'default wiki config' "
+                    default_phrase,
+                    content.lower() if skill_name != "wiki-distill" else content,
+                    f"{skill_name} SKILL.md should mention '{default_phrase}' "
                     "when the default config-dir is used",
                 )
                 self.assertIn(
-                    "tell the user",
-                    content.lower(),
+                    tell_phrase,
+                    content.lower() if skill_name != "wiki-distill" else content,
                     f"{skill_name} SKILL.md should instruct the agent to "
                     "tell the user when default config is being used",
                 )

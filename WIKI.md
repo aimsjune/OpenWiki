@@ -12,6 +12,8 @@ index_categories:
   - Concepts Pages
   - Topic Relations
   - Quick Navigation
+remote_sync_path: wiki
+auto_sync: false
 ---
 
 # WIKI
