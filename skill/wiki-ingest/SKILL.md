@@ -53,7 +53,19 @@ Tell the user:
 - what entities or concepts this introduces or updates
 - whether it contradicts anything already in the wiki (read `wiki/index.md` and relevant pages to check)
 
-Ask: **"Anything specific you want me to emphasize or de-emphasize?"**
+**建议适用范围**：分析源内容，建议 `scope_level` 和 `scope_code`。参考下表：
+
+| scope_level | 中文名 | 含义 |
+|-------------|--------|------|
+| repo | 代码仓库 | 单个代码仓库级别 |
+| domain | 领域 | 跨若干个代码仓库适用 |
+| company | 公司 | 跨若干个领域适用 |
+| industry | 行业 | 跨若干个公司适用 |
+| wisdom | 智慧 | 高度抽象，跨多行业多场景适用 |
+
+展示格式：`适用范围: <scope_level 中文名>（<scope_code>）`。scope_code 遵循 slug 规则（小写、连字符、无特殊字符）。
+
+Ask: **"Anything specific you want me to emphasize or de-emphasize? 适用范围是否合适？"**
 
 Wait for the user's response before proceeding.
 
@@ -87,6 +99,8 @@ title: <source title>
 tags: [<relevant tags>]
 sources: <number of sources>
 updated: <today>
+scope_level: <repo|domain|company|industry|wisdom>
+scope_code: <slug>
 ---
 
 # <Source Title>
@@ -94,6 +108,7 @@ updated: <today>
 **来源：** <original URL or local path>
 **摄入日期：** <today>
 **类型：** <paper | article | transcript | code | other>
+**适用范围：** <scope_level 中文名>（<scope_code>）
 
 ## 核心定义
 
@@ -128,11 +143,24 @@ Scan all existing pages in `wiki/pages/` for any that mention this source's enti
 Add or update entries in the table format:
 
 ```markdown
-## Wiki Pages
-| Page | Summary | Tags | Last Updated |
-|------|---------|------|--------------|
+## Wiki 页面
+| 页面 | 摘要 | 标签 | 最后更新 |
+|------|------|------|----------|
 | [[<slug>]] | One-line description | tag1, tag2 | <today> |
 ```
+
+同步更新 category_3（适用范围）区域。按 `scope_code` 分组聚合，每组以 `### scope_code` 三级标题开头，组内按最后更新日期倒序排列：
+
+```markdown
+## 适用范围
+
+### <scope_code>
+- [[<slug>]] — <scope_level 中文名> | <today>
+```
+
+- scope_code 组已存在时追加 `[[slug]]` 条目到该组
+- scope_code 组不存在时创建新的 `### scope_code` 区块
+- scope_code 组下最后一个页面被移除时删除该区块
 
 ### 10. Append to `wiki/log.md`
 

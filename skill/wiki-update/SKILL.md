@@ -59,6 +59,12 @@ If the new information contradicts existing wiki content, search all pages for t
 
 If a page summary changes, update its row and update the `updated` date in frontmatter.
 
+如果页面的 `scope_level` 或 `scope_code` 发生变更，同步更新 category_3（适用范围）区域：
+- category_3 中旧 scope_code 组移除该页面的 `[[slug]]`
+- category_3 中新 scope_code 组新增该页面的 `[[slug]]`
+- 若旧组变为空则删除该 `### scope_code` 区块
+- 若新组不存在则创建 `### scope_code` 区块
+
 ### 6. Append to `wiki/log.md`
 
 Always append an `update` record that includes the reason and source.

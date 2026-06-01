@@ -33,6 +33,8 @@ Do not depend on legacy agent-specific files or compatibility directories.
 
 Scan the full index to identify which pages are likely relevant. Do not answer from general knowledge first.
 
+同时扫描 category_3（适用范围）区域。当用户问题涉及特定代码仓库或领域时，优先检索该 `scope_code` 下的页面。
+
 ### 2. Read relevant pages
 
 Read the identified pages in full. Follow one level of `[[slug]]` links if they point to pages that seem relevant to the question.

@@ -55,6 +55,10 @@ Read `wiki/index.md` and all files in `wiki/pages/`. Build a map of:
 - missing-chinese-title — h1 标题不包含任何中文字符。仅检查 Markdown h1，不检查 frontmatter 中的 `title` 字段
 - missing-term-glossary — 英文多词术语（2 个及以上单词）在页面中首次出现时未附中文解释。支持两种标注形式：`中文术语（English Term）` 或 `English Term（中文术语）`。单字术语（如 "Go"、"Rust"）不触发
 - missing-bilingual-tags — frontmatter 中 `tags` 仅有英文标签无中文标签。仅当 `primary_language` 为 `zh` 且 `secondary_language` 为 `en` 时启用。只要存在任意中文标签即满足
+- missing-scope-fields — 页面 frontmatter 缺少 `scope_level` 或 `scope_code` 字段（向后兼容，Yellow Warning 级别）
+- invalid-scope-level — `scope_level` 不在合法枚举值中（合法值：`repo`、`domain`、`company`、`industry`、`wisdom`）
+- invalid-scope-code-format — `scope_code` 不符合 slug 规则（全小写、连字符、无特殊字符，中文代号须翻译为英文）
+- scope-level-code-mismatch — `scope_level` 为 `wisdom` 但 `scope_code` 不为 `"wisdom"`
 
 **语言规则启用条件**：仅当 `WIKI.md` 中 `primary_language` 为 `zh` 时启用以上 4 条语言规则。若 `primary_language` 不为 `zh`，跳过全部语言规则。若 `WIKI.md` 不含 `primary_language` 字段（旧格式），默认视为 `zh`。
 

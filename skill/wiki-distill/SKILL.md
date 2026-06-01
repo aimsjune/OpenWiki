@@ -207,14 +207,31 @@ dynamic_categories: [<AI 动态发现的分类>]
 
 #### 3.1 NEW 条目处理
 
-对于每条 NEW 经验，询问用户：
+对于每条 NEW 经验，AI 根据项目路径自动推断适用范围：
 
-> "是否将这条经验新增到 wiki？[Y/n]"
+- `scope_level` 默认为 `repo`（从代码仓库蒸馏）
+- `scope_code` 默认为项目目录名（如 `llm-wiki`），遵循 slug 规则
+- scope_level 中文名映射：`repo`→代码仓库、`domain`→领域、`company`→公司、`industry`→行业、`wisdom`→智慧
 
-用户确认后，委托 `wiki-ingest` 写入。一条经验对应一个 wiki page：
+展示格式：
+
+```
+🆕 NEW: <经验标题>
+   经验: <经验内容摘要>
+   Wiki 状态: 无对应内容
+   适用范围: <scope_level 中文名>（<scope_code>）
+```
+
+询问用户：
+
+> "是否将这条经验新增到 wiki？[Y/n/修改适用范围]"
+
+用户确认后，委托 `wiki-ingest` 写入。传递确认后的 scope_level 和 scope_code：
 
 - slug = 经验标题的 slugify（小写、连字符、无特殊字符）
 - source = 经验描述文本
+- scope_level = 确认后的值
+- scope_code = 确认后的值
 - 遵循 `wiki-ingest` 的完整流程（含 cloud sync）
 
 #### 3.2 CONFLICT 条目处理
