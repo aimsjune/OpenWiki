@@ -15,21 +15,21 @@ class WikiDistillMergeTest(unittest.TestCase):
         self.assertIn("wiki-ingest", self.content)
 
     def test_new_one_experience_per_page(self) -> None:
-        self.assertIn("一条经验", self.content)
+        self.assertIn("每条 NEW 经验", self.content)
         self.assertIn("wiki page", self.content.lower())
 
     def test_new_describes_slug_generation(self) -> None:
         self.assertIn("slugify", self.content.lower())
 
     def test_new_describes_full_ingest_flow(self) -> None:
-        self.assertIn("完整流程", self.content)
+        self.assertIn("Phase 3: DECIDE & MERGE", self.content)
 
     def test_new_asks_user_for_confirmation(self) -> None:
         self.assertIn("是否将这条经验新增到 wiki", self.content)
-        self.assertIn("[Y/n]", self.content)
+        self.assertIn("[Y/n/修改适用范围]", self.content)
 
     def test_conflict_delegates_to_wiki_update(self) -> None:
-        self.assertIn("wiki-update", self.content)
+        self.assertIn("openwiki page update", self.content)
 
     def test_conflict_shows_diff(self) -> None:
         self.assertIn("diff", self.content.lower())
@@ -43,7 +43,7 @@ class WikiDistillMergeTest(unittest.TestCase):
 
     def test_conflict_describes_update_flow(self) -> None:
         self.assertIn("确认", self.content)
-        self.assertIn("下游检查", self.content)
+        self.assertIn("收尾：委托 wiki-lint", self.content)
 
     def test_conflict_asks_user_for_confirmation(self) -> None:
         self.assertIn("是否按建议合并", self.content)

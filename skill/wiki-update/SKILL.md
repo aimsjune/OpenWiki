@@ -3,7 +3,6 @@ name: wiki-update
 description: Use when revising existing wiki pages because knowledge has changed, a new piece of information updates or contradicts existing content, or the user wants to directly edit wiki content with LLM assistance.
 composes: [wiki-ingest, wiki-lint, wiki-init]
 ---
-
 # Wiki Update
 
 Revise existing wiki pages. Always show diffs before writing. Always log. Always cite the source of new information.
@@ -13,13 +12,13 @@ Revise existing wiki pages. Always show diffs before writing. Always log. Always
 Use this discovery order for the configuration directory:
 
 1. If the user explicitly provides a `config-dir`, use it.
-2. Otherwise, check `~/.wiki-config/WIKI.md`. If it exists and is valid, use it as the default wiki config.
-3. If the default config is not found or invalid, search upward from the current working directory for `WIKI.md`.
-4. If `WIKI.md` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
+2. Otherwise, check `~/.openwiki/openwiki.toml`. If it exists and is valid, use it as the default wiki config.
+3. If the default config is not found or invalid, search upward from the current working directory for `openwiki.toml`.
+4. If `openwiki.toml` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
 
-If the default wiki config at `~/.wiki-config` is used, tell the user you are using the default wiki config.
+If the default wiki config at `~/.openwiki` is used, tell the user you are using the default wiki config.
 
-Read `WIKI.md` to resolve the absolute `wiki_root` plus:
+Read `openwiki.toml` to resolve the absolute `wiki_root` plus:
 
 - `wiki/index.md`
 - `wiki/log.md`
@@ -39,7 +38,13 @@ The user may provide:
 
 ### 2. For each page to update
 
-Read the current content in full. Propose the change with:
+Use the CLI to read the current content:
+
+```bash
+openwiki page get <slug> --json
+```
+
+Propose the change with:
 
 > **Current:** `<quote the existing text>`  
 > **Proposed:** `<replacement text>`  
@@ -47,6 +52,12 @@ Read the current content in full. Propose the change with:
 > **Source:** `<URL, raw/ path, or other source>`
 
 Ask for confirmation before writing each page.
+
+Use the CLI to update:
+
+```bash
+openwiki page update <slug> --file <content-file> --json
+```
 
 ### 3. Check downstream effects
 
@@ -68,7 +79,11 @@ If a page summary changes, update its row and update the `updated` date in front
 
 ### 6. Append to `wiki/log.md`
 
-Always append an `update` record that includes the reason and source.
+Use the CLI:
+
+```bash
+openwiki log append "update | <slug> - <reason>"
+```
 
 ## Common Mistakes
 

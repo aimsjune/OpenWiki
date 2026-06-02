@@ -35,21 +35,48 @@ def parse_frontmatter(filepath):
     return result
 
 
-def check_wiki_config(wiki_root):
-    config_path = os.path.join(wiki_root, "WIKI.md")
-    if not os.path.exists(config_path):
-        return {"name": "wiki-config-exists", "status": "fail", "message": f"WIKI.md 不存在于 {wiki_root}"}
+def parse_toml(filepath):
+    result = {}
+    current_section = result
+    with open(filepath) as f:
+        for line in f:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            if stripped.startswith("[") and stripped.endswith("]"):
+                section_name = stripped[1:-1].strip()
+                section_path = section_name.split(".")
+                current_section = result
+                for part in section_path:
+                    if part not in current_section:
+                        current_section[part] = {}
+                    current_section = current_section[part]
+                continue
+            if "=" in stripped:
+                key, _, val = stripped.partition("=")
+                key = key.strip()
+                val = val.strip().strip('"').strip("'")
+                current_section[key] = val
+    return result
 
-    fm = parse_frontmatter(config_path)
+
+def check_wiki_config(wiki_root):
+    config_path = os.path.join(wiki_root, "openwiki.toml")
+    if not os.path.exists(config_path):
+        return {"name": "wiki-config-exists", "status": "fail", "message": f"openwiki.toml 不存在于 {wiki_root}"}
+
+    cfg = parse_toml(config_path)
     missing = []
-    for field in ["wiki_root", "primary_language"]:
-        if field not in fm:
-            missing.append(field)
+    if "wiki_root" not in cfg:
+        missing.append("wiki_root")
+    wiki_section = cfg.get("wiki", {})
+    if "primary_language" not in wiki_section:
+        missing.append("wiki.primary_language")
 
     if missing:
-        return {"name": "wiki-config-fields", "status": "fail", "message": f"WIKI.md 缺少必填字段: {', '.join(missing)}"}
+        return {"name": "wiki-config-fields", "status": "fail", "message": f"openwiki.toml 缺少必填字段: {', '.join(missing)}"}
 
-    return {"name": "wiki-config-fields", "status": "pass", "message": "WIKI.md 必填字段完整"}
+    return {"name": "wiki-config-fields", "status": "pass", "message": "openwiki.toml 必填字段完整"}
 
 
 def check_index_table(wiki_root):

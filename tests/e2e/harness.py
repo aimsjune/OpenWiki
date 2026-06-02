@@ -172,22 +172,22 @@ def run_init_reference(
     if not instance.wiki_root.is_absolute():
         raise ValueError("wiki_root must be an absolute path")
 
-    contract = _load_template("WIKI.md")
+    contract = _load_template("openwiki.toml")
     contract = contract.replace("/absolute/path/to/wiki-root", str(instance.wiki_root))
     contract = contract.replace("<user domain description>", domain)
     contract = _replace_section_block(
         contract,
-        start_marker="source_types:\n",
-        end_marker="index_categories:\n",
+        start_marker="[wiki.source_types]\n",
+        end_marker="[wiki.index]\n",
         replacement=(
-            "source_types:\n"
-            + "\n".join(f"  - {source_type}" for source_type in source_types)
+            "[wiki.source_types]\n"
+            + "types = [" + ", ".join(f'"{st}"' for st in source_types) + "]\n"
             + "\n"
         ),
     )
     for placeholder, category in zip(CATEGORY_PLACEHOLDERS, index_categories):
         contract = contract.replace(placeholder, category)
-    _assert_no_placeholders("WIKI.md", contract, CATEGORY_PLACEHOLDERS)
+    _assert_no_placeholders("openwiki.toml", contract, CATEGORY_PLACEHOLDERS)
 
     wiki_dir = instance.wiki_root / "wiki"
     pages_dir = wiki_dir / "pages"
@@ -207,7 +207,7 @@ def run_init_reference(
     log_md = log_md.replace("<today>", "2026-05-22")
     log_md = log_md.replace("<domain>", domain)
 
-    (instance.config_dir / "WIKI.md").write_text(contract, encoding="utf-8")
+    (instance.config_dir / "openwiki.toml").write_text(contract, encoding="utf-8")
     (wiki_dir / "index.md").write_text(index_md, encoding="utf-8")
     (wiki_dir / "log.md").write_text(log_md, encoding="utf-8")
 

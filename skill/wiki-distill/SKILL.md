@@ -3,7 +3,6 @@ name: wiki-distill
 description: 从代码库中蒸馏设计经验，与现有 wiki 比对后合并。适用于从已完成项目中提取设计原则、代码模式、架构决策等隐性知识并沉淀到 wiki 中。
 composes: [wiki-ingest, wiki-lint]
 ---
-
 # Wiki Distill
 
 从代码库中提取经验，与 wiki 比对，用户决策后合并知识。
@@ -13,13 +12,13 @@ composes: [wiki-ingest, wiki-lint]
 使用以下顺序发现配置目录：
 
 1. 如果用户显式提供了 `config-dir`，使用它。
-2. 否则，检查 `~/wiki/.wiki-config/WIKI.md`。如果存在且有效，将其作为默认 wiki 配置。
-3. 如果默认配置未找到或无效，从当前工作目录向上搜索 `WIKI.md`。
-4. 如果仍未找到 `WIKI.md`，请用户提供绝对 `config-dir` 或告知其先运行 `wiki-init`。
+2. 否则，检查 `~/.openwiki/openwiki.toml`。如果存在且有效，将其作为默认 wiki 配置。
+3. 如果默认配置未找到或无效，从当前工作目录向上搜索 `openwiki.toml`。
+4. 如果仍未找到 `openwiki.toml`，请用户提供绝对 `config-dir` 或告知其先运行 `wiki-init`。
 
-如果使用了默认 wiki 配置（`~/wiki/.wiki-config`），告知用户当前使用的是默认 wiki 配置。
+如果使用了默认 wiki 配置（`~/.openwiki`），告知用户当前使用的是默认 wiki 配置。
 
-读取 `WIKI.md` 解析：
+读取 `openwiki.toml` 解析：
 
 - 绝对 `wiki_root`
 - `raw/`
@@ -159,7 +158,13 @@ dynamic_categories: [<AI 动态发现的分类>]
 
 #### 2.1 加载 wiki 内容
 
-读取 `wiki/index.md` 和所有 `wiki/pages/*.md`，构建 wiki 知识库的完整视图。
+使用 CLI 读取 `wiki/index.md` 和所有 `wiki/pages/*.md`：
+
+```bash
+openwiki page list --json
+```
+
+构建 wiki 知识库的完整视图。
 
 #### 2.2 逐条声明级比对
 
@@ -229,13 +234,16 @@ dynamic_categories: [<AI 动态发现的分类>]
 
 > "是否将这条经验新增到 wiki？[Y/n/修改适用范围]"
 
-用户确认后，委托 `wiki-ingest` 写入。传递确认后的 scope_level 和 scope_code：
+用户确认后，使用 CLI 创建页面：
+
+```bash
+openwiki page create <slug> --file <content-file> --json
+```
 
 - slug = 经验标题的 slugify（小写、连字符、无特殊字符）
 - source = 经验描述文本
 - scope_level = 确认后的值
 - scope_code = 确认后的值
-- 遵循 `wiki-ingest` 的完整流程（含 cloud sync）
 
 #### 3.2 CONFLICT 条目处理
 
@@ -243,20 +251,23 @@ dynamic_categories: [<AI 动态发现的分类>]
 
 > "是否按建议合并？[Y/n/skip]"
 
-用户确认后，委托 `wiki-update` 执行合并。采用**策略C**：
+用户确认后，使用 CLI 更新页面：
+
+```bash
+openwiki page update <slug> --file <content-file> --json
+```
+
+采用**策略C**：
 
 - 融合经验和 wiki 内容
 - 在合并后的页面中标注 `经验来源: distill-<project>` 和 `wiki 来源: <原页面名>`
-- 遵循 `wiki-update` 的完整流程（diff → 确认 → 写入 → 下游检查）
 
 #### 3.3 EXISTS 条目处理
 
-对于 EXISTS 条目，告知用户该经验已被 wiki 覆盖，无需操作。追加 `wiki/log.md` 记录：
+对于 EXISTS 条目，告知用户该经验已被 wiki 覆盖，无需操作。追加日志：
 
-```markdown
-## [<today>] distill | <project>
-- EXISTS: <N> 条经验已覆盖，跳过
-- 来源页面: <页面列表>
+```bash
+openwiki log append "distill | <project> - EXISTS: <N> 条经验已覆盖"
 ```
 
 #### 3.4 收尾：委托 wiki-lint
@@ -268,17 +279,10 @@ dynamic_categories: [<AI 动态发现的分类>]
 
 #### 3.5 追加完整日志
 
-在 `wiki/log.md` 中追加本次蒸馏的完整操作记录：
+使用 CLI 追加日志：
 
-```markdown
-## [<today>] distill | <project>
-- 分析深度: <depth>, 模式: <mode>
-- 总经验数: <N>
-- NEW: <N> 条 → 新增页面: <页面列表>
-- CONFLICT: <N> 条 → 更新页面: <页面列表>
-- EXISTS: <N> 条 → 跳过
-- 脱敏过滤: <N> 条
-- 收尾验证: wiki-lint <结果>
+```bash
+openwiki log append "distill | <project> - 分析深度: <depth>, 模式: <mode>, 总经验数: <N>, NEW: <N>, CONFLICT: <N>, EXISTS: <N>"
 ```
 
 #### 3.6 更新增量状态

@@ -88,7 +88,7 @@
 2. 统计中文字符占比
 3. 低于 60% 时触发
 
-**启用条件**: `WIKI.md` 中 `primary_language` 为 `zh`。
+**启用条件**: `openwiki.toml` 中 `primary_language` 为 `zh`。
 
 **修复建议**: 将英文描述翻译为中文，或为英文内容添加中文摘要。
 
@@ -105,7 +105,7 @@
 
 **注意**: 仅检查 Markdown h1，不检查 frontmatter 中的 `title` 字段。
 
-**启用条件**: `WIKI.md` 中 `primary_language` 为 `zh`。
+**启用条件**: `openwiki.toml` 中 `primary_language` 为 `zh`。
 
 **修复建议**: 将 h1 标题翻译为中文，或在英文标题后附加中文翻译。
 
@@ -126,7 +126,7 @@
 2. 检查首次出现时是否附带中文解释
 3. 未附带时触发
 
-**启用条件**: `WIKI.md` 中 `primary_language` 为 `zh`。
+**启用条件**: `openwiki.toml` 中 `primary_language` 为 `zh`。
 
 **修复建议**: 在术语首次出现时添加中文解释，如 `依赖注入（Dependency Injection）`。
 
@@ -141,7 +141,7 @@
 2. 检查是否存在中文字符的标签
 3. 无中文标签时触发
 
-**启用条件**: `WIKI.md` 中 `primary_language` 为 `zh` 且 `secondary_language` 为 `en`。
+**启用条件**: `openwiki.toml` 中 `primary_language` 为 `zh` 且 `secondary_language` 为 `en`。
 
 **修复建议**: 为每个英文标签添加对应的中文标签。
 

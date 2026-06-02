@@ -2,7 +2,6 @@
 name: wiki-lint
 description: Use when auditing a wiki for health issues — contradictions between pages, orphan pages, broken cross-references, stale claims, missing pages, or coverage gaps.
 ---
-
 # Wiki Lint
 
 Audit the wiki. Produce a categorized report. Offer concrete fixes. Log the operation.
@@ -12,13 +11,13 @@ Audit the wiki. Produce a categorized report. Offer concrete fixes. Log the oper
 Use this discovery order for the configuration directory:
 
 1. If the user explicitly provides a `config-dir`, use it.
-2. Otherwise, check `~/.wiki-config/WIKI.md`. If it exists and is valid, use it as the default wiki config.
-3. If the default config is not found or invalid, search upward from the current working directory for `WIKI.md`.
-4. If `WIKI.md` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
+2. Otherwise, check `~/.openwiki/openwiki.toml`. If it exists and is valid, use it as the default wiki config.
+3. If the default config is not found or invalid, search upward from the current working directory for `openwiki.toml`.
+4. If `openwiki.toml` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
 
-If the default wiki config at `~/.wiki-config` is used, tell the user you are using the default wiki config.
+If the default wiki config at `~/.openwiki` is used, tell the user you are using the default wiki config.
 
-Read `WIKI.md` to resolve the absolute `wiki_root` plus:
+Read `openwiki.toml` to resolve the absolute `wiki_root` plus:
 
 - `wiki/index.md`
 - `wiki/log.md`
@@ -35,6 +34,12 @@ Do not depend on legacy agent-specific files or compatibility directories.
 
 ### 1. Build the page inventory
 
+Use the CLI to list all pages:
+
+```bash
+openwiki page list --json
+```
+
 Read `wiki/index.md` and all files in `wiki/pages/`. Build a map of:
 
 - all existing slugs
@@ -49,7 +54,7 @@ Read `wiki/index.md` and all files in `wiki/pages/`. Build a map of:
 
 **Yellow Warnings**: orphan-pages, contradictions, stale-claims, content-not-chinese-primary, missing-chinese-title, missing-term-glossary, missing-bilingual-tags, missing-scope-fields, invalid-scope-level, invalid-scope-code-format, scope-level-code-mismatch
 
-**语言规则启用条件**：仅当 `WIKI.md` 中 `primary_language` 为 `zh` 时启用语言规则。若 `WIKI.md` 不含 `primary_language` 字段（旧格式），默认视为 `zh`。
+**语言规则启用条件**：仅当 `openwiki.toml` 中 `primary_language` 为 `zh` 时启用语言规则。若 `openwiki.toml` 不含 `primary_language` 字段（旧格式），默认视为 `zh`。
 
 **英文豁免清单**：详见 `references/exemption-checklist.md`。
 

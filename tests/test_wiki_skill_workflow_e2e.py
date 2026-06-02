@@ -28,14 +28,14 @@ class WikiSkillWorkflowE2ETest(unittest.TestCase):
             ],
         )
 
-        self.assertTrue((instance.config_dir / "WIKI.md").exists())
+        self.assertTrue((instance.config_dir / "openwiki.toml").exists())
         self.assertTrue((instance.wiki_root / "raw").is_dir())
         self.assertTrue((instance.wiki_root / "wiki" / "index.md").exists())
         self.assertTrue((instance.wiki_root / "wiki" / "log.md").exists())
         self.assertTrue((instance.wiki_root / "wiki" / "pages").is_dir())
         self.assertTrue((instance.wiki_root / "concepts").is_dir())
 
-        contract = (instance.config_dir / "WIKI.md").read_text(encoding="utf-8")
+        contract = (instance.config_dir / "openwiki.toml").read_text(encoding="utf-8")
         index_md = (instance.wiki_root / "wiki" / "index.md").read_text(encoding="utf-8")
         log_md = (instance.wiki_root / "wiki" / "log.md").read_text(encoding="utf-8")
         expected_categories = [
@@ -45,18 +45,14 @@ class WikiSkillWorkflowE2ETest(unittest.TestCase):
             "Quick Navigation",
         ]
 
-        self.assertIn(f"wiki_root: {instance.wiki_root}", contract)
-        self.assertIn("domain: E2E testing knowledge base", contract)
+        self.assertIn(f'wiki_root = "{instance.wiki_root}"', contract)
+        self.assertIn('domain = "E2E testing knowledge base"', contract)
         self.assertIn(
-            "source_types:\n  - notes\n  - articles\n  - transcripts",
+            'types = ["notes", "articles", "transcripts"]',
             contract,
         )
         self.assertIn(
-            "index_categories:\n"
-            "  - Wiki Pages\n"
-            "  - Concepts Pages\n"
-            "  - Topic Relations\n"
-            "  - Quick Navigation",
+            'categories = ["Wiki Pages", "Concepts Pages", "Topic Relations", "Quick Navigation"]',
             contract,
         )
         self.assertNotIn("<user domain description>", contract)
@@ -98,7 +94,7 @@ class WikiSkillWorkflowE2ETest(unittest.TestCase):
                         index_categories=index_categories,
                     )
 
-                self.assertFalse((instance.config_dir / "WIKI.md").exists())
+                self.assertFalse((instance.config_dir / "openwiki.toml").exists())
                 self.assertFalse((instance.wiki_root / "wiki" / "index.md").exists())
                 self.assertFalse((instance.wiki_root / "wiki" / "log.md").exists())
 

@@ -7,15 +7,15 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 class StandardWikiInitRuntimeTest(unittest.TestCase):
     def test_repo_has_root_wiki_contract_with_absolute_wiki_root(self) -> None:
-        wiki_md = REPO_ROOT / "WIKI.md"
+        config_path = REPO_ROOT / "openwiki.toml"
 
-        self.assertTrue(wiki_md.exists(), "expected root WIKI.md to exist")
+        self.assertTrue(config_path.exists(), "expected root openwiki.toml to exist")
 
-        content = wiki_md.read_text(encoding="utf-8")
+        content = config_path.read_text(encoding="utf-8")
         self.assertIn(
-            f"wiki_root: {REPO_ROOT}",
+            f'wiki_root = "{REPO_ROOT}"',
             content,
-            "expected WIKI.md to record the repository root as an absolute wiki_root",
+            "expected openwiki.toml to record the repository root as an absolute wiki_root",
         )
         self.assertTrue((REPO_ROOT / "raw").is_dir(), "expected raw/ under wiki_root")
         self.assertTrue((REPO_ROOT / "wiki").is_dir(), "expected wiki/ under wiki_root")
@@ -44,8 +44,8 @@ class StandardWikiInitRuntimeTest(unittest.TestCase):
         content = skill_path.read_text(encoding="utf-8")
         self.assertIn("configuration directory", content)
         self.assertIn("wiki root directory", content)
-        self.assertIn("WIKI.md", content)
-        self.assertIn("absolute `wiki_root`", content)
+        self.assertIn("openwiki.toml", content)
+        self.assertIn("absolute path", content)
         self.assertIn("raw/", content)
         self.assertIn("wiki/index.md", content)
         self.assertIn("wiki/log.md", content)
@@ -58,10 +58,10 @@ class StandardWikiInitRuntimeTest(unittest.TestCase):
 
         content = skill_path.read_text(encoding="utf-8")
         self.assertIn("explicitly provides a `config-dir`", content)
-        self.assertIn("reuse the existing `WIKI.md`", content)
+        self.assertIn("reuse the existing config", content)
         self.assertIn("continue with the existing wiki instance", content)
         self.assertIn("rather than reinitializing", content)
-        self.assertIn("do not rewrite `WIKI.md`", content)
+        self.assertIn("do not rewrite `openwiki.toml`", content)
 
     def test_wiki_init_skill_skips_known_fields_from_existing_wiki_md(self) -> None:
         skill_path = REPO_ROOT / "skill" / "wiki-init" / "SKILL.md"
@@ -85,13 +85,13 @@ class StandardWikiInitRuntimeTest(unittest.TestCase):
         self.assertIn("missing `wiki_root`", content)
         self.assertIn("`wiki_root` is not absolute", content)
         self.assertIn("required wiki layout is missing", content)
-        self.assertIn("do not rewrite `WIKI.md`", content)
+        self.assertIn("do not rewrite `openwiki.toml`", content)
         self.assertIn("explicitly chooses `reinitialize`", content)
 
     def test_wiki_init_index_template_uses_category_placeholders(self) -> None:
         template_path = REPO_ROOT / "skill" / "wiki-init" / "templates" / "index.md"
         wiki_contract_template_path = (
-            REPO_ROOT / "skill" / "wiki-init" / "templates" / "WIKI.md"
+            REPO_ROOT / "skill" / "wiki-init" / "templates" / "openwiki.toml"
         )
         skill_path = REPO_ROOT / "skill" / "wiki-init" / "SKILL.md"
 
@@ -115,7 +115,7 @@ class StandardWikiInitRuntimeTest(unittest.TestCase):
         self.assertIn("<category_2>", wiki_contract_template_content)
         self.assertIn("<category_3>", wiki_contract_template_content)
         self.assertIn("<category_4>", wiki_contract_template_content)
-        self.assertIn("user-selected categories", skill_content)
+        self.assertIn("Or specify custom", skill_content)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ This document defines the dependency boundary for public wiki skills under `skil
 
 Public wiki skills may refer to runtime wiki objects that belong to a wiki instance rather than to the skill package itself:
 
-- `WIKI.md`
+- `openwiki.toml`
 - `raw/`
 - `wiki/`
 - `concepts/`
@@ -39,3 +39,5 @@ Approved skill-local directory names:
 - `fixtures/`
 - `assets/`
 - `scripts/`
+- `references/`
+- `tests/`

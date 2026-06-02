@@ -2,7 +2,6 @@
 name: wiki-ingest
 description: Use when adding a new source to a wiki — a paper, article, URL, file, transcript, or any document. One ingest may touch 5-15 wiki pages.
 ---
-
 # Wiki Ingest
 
 Add a source to the wiki. Read it, discuss with the user, write or update wiki pages, update the index, and log the operation.
@@ -12,13 +11,13 @@ Add a source to the wiki. Read it, discuss with the user, write or update wiki p
 Use this discovery order for the configuration directory:
 
 1. If the user explicitly provides a `config-dir`, use it.
-2. Otherwise, check `~/.wiki-config/WIKI.md`. If it exists and is valid, use it as the default wiki config.
-3. If the default config is not found or invalid, search upward from the current working directory for `WIKI.md`.
-4. If `WIKI.md` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
+2. Otherwise, check `~/.openwiki/openwiki.toml`. If it exists and is valid, use it as the default wiki config.
+3. If the default config is not found or invalid, search upward from the current working directory for `openwiki.toml`.
+4. If `openwiki.toml` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
 
-If the default wiki config at `~/.wiki-config` is used, tell the user you are using the default wiki config.
+If the default wiki config at `~/.openwiki` is used, tell the user you are using the default wiki config.
 
-Read `WIKI.md` to resolve:
+Read `openwiki.toml` to resolve:
 
 - the absolute `wiki_root`
 - `raw/`
@@ -80,11 +79,23 @@ For core concepts or key claims, use `agent-browser` to fetch current authoritat
 
 ### 6. Write or update wiki pages
 
-Write to `wiki/pages/<slug>.md` under `wiki_root`。页面模板详见 `references/page-template.md`。
+Use the CLI to create pages:
+
+```bash
+openwiki page create <slug> --file <content-file> --json
+```
+
+页面模板详见 `references/page-template.md`。
 
 ### 6.1 验证写入
 
-重新读取刚写入的页面文件，执行以下检查：
+Use the CLI to read back the page:
+
+```bash
+openwiki page get <slug> --json
+```
+
+执行以下检查：
 
 - frontmatter 是否包含所有必填字段（title、tags、updated、scope_level、scope_code）
 - [[交叉引用]] 是否指向存在的页面（在 `wiki/pages/` 中可找到对应文件）
@@ -127,13 +138,10 @@ Add or update entries in the table format:
 
 ### 10. Append to `wiki/log.md`
 
-Always append:
+Use the CLI:
 
-```markdown
-## [<today>] ingest | <source title>
-- Created/Updated pages: xxx, yyy
-- Web verification: yes/no, source: <url>
-- Key findings: ...
+```bash
+openwiki log append "ingest | <source title> - Created/Updated pages: xxx, yyy"
 ```
 
 ### 11. Report to the user

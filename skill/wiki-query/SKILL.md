@@ -2,7 +2,6 @@
 name: wiki-query
 description: Use when asking a question against a personal wiki built with wiki-init and wiki-ingest. Do not answer from general knowledge — always read the wiki pages first.
 ---
-
 # Wiki Query
 
 Ask a question. Read the wiki. Synthesize with citations. Offer to file the answer back.
@@ -12,13 +11,13 @@ Ask a question. Read the wiki. Synthesize with citations. Offer to file the answ
 Use this discovery order for the configuration directory:
 
 1. If the user explicitly provides a `config-dir`, use it.
-2. Otherwise, check `~/.wiki-config/WIKI.md`. If it exists and is valid, use it as the default wiki config.
-3. If the default config is not found or invalid, search upward from the current working directory for `WIKI.md`.
-4. If `WIKI.md` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
+2. Otherwise, check `~/.openwiki/openwiki.toml`. If it exists and is valid, use it as the default wiki config.
+3. If the default config is not found or invalid, search upward from the current working directory for `openwiki.toml`.
+4. If `openwiki.toml` is still not found, ask the user for an absolute config-dir or tell them to run `wiki-init` first.
 
-If the default wiki config at `~/.wiki-config` is used, tell the user you are using the default wiki config.
+If the default wiki config at `~/.openwiki` is used, tell the user you are using the default wiki config.
 
-Read `WIKI.md` to resolve the absolute `wiki_root` plus:
+Read `openwiki.toml` to resolve the absolute `wiki_root` plus:
 
 - `wiki/index.md`
 - `wiki/log.md`
@@ -33,11 +32,23 @@ Do not depend on legacy agent-specific files or compatibility directories.
 
 ### 1. Read `wiki/index.md` first
 
-Scan the full index to identify which pages are likely relevant. Do not answer from general knowledge first.
+Use the CLI to scan the full index:
+
+```bash
+openwiki page list --json
+```
+
+Identify which pages are likely relevant. Do not answer from general knowledge first.
 
 同时扫描 category_3（适用范围）区域。当用户问题涉及特定代码仓库或领域时，优先检索该 `scope_code` 下的页面。
 
 ### 2. Read relevant pages
+
+Use the CLI to read pages:
+
+```bash
+openwiki page get <slug> --json
+```
 
 Read the identified pages in full. Follow one level of `[[slug]]` links if they point to pages that seem relevant to the question.
 

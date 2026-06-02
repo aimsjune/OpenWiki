@@ -16,7 +16,7 @@ class DocumentationLayoutTest(unittest.TestCase):
         for readme_name in ("README.md", "README.en.md", "README.ja.md"):
             with self.subTest(readme=readme_name):
                 content = (REPO_ROOT / readme_name).read_text(encoding="utf-8")
-                self.assertIn("WIKI.md", content)
+                self.assertIn("openwiki.toml", content)
                 self.assertIn("skill/", content)
                 self.assertIn("config-dir", content)
                 self.assertIn("wiki-root", content)
@@ -55,9 +55,9 @@ class DocumentationLayoutTest(unittest.TestCase):
             with self.subTest(readme=readme_name):
                 content = (REPO_ROOT / readme_name).read_text(encoding="utf-8")
                 self.assertIn(
-                    "~/.wiki-config",
+                    "~/.openwiki",
                     content,
-                    f"{readme_name} should mention ~/.wiki-config "
+                    f"{readme_name} should mention ~/.openwiki "
                     "as the default config directory",
                 )
 

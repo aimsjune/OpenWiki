@@ -50,8 +50,8 @@ class WikiDistillStaticTest(unittest.TestCase):
         self.assertIn("显式提供了 `config-dir`", distill_content)
         self.assertIn("explicitly provides a `config-dir`", ingest_content)
 
-        self.assertIn("wiki/.wiki-config", distill_content)
-        self.assertIn("~/.wiki-config", ingest_content)
+        self.assertIn("~/.openwiki", distill_content)
+        self.assertIn("~/.openwiki", ingest_content)
 
         self.assertIn("当前工作目录", distill_content)
         self.assertIn("current working directory", ingest_content)
@@ -62,12 +62,12 @@ class WikiDistillStaticTest(unittest.TestCase):
     def test_distill_precondition_default_config_appears_before_workspace(self) -> None:
         content = _DISTILL_SKILL.read_text(encoding="utf-8")
 
-        default_pos = content.index("wiki/.wiki-config")
+        default_pos = content.index("~/.openwiki")
         workspace_pos = content.index("当前工作目录")
         self.assertLess(
             default_pos,
             workspace_pos,
-            "~/.wiki-config should appear before workspace discovery in distill",
+            "~/.openwiki should appear before workspace discovery in distill",
         )
 
     def test_distill_precondition_mentions_default_config_communication(self) -> None:
@@ -85,7 +85,7 @@ class WikiDistillStaticTest(unittest.TestCase):
 
     def test_distill_skill_resolves_wiki_md_fields(self) -> None:
         content = _DISTILL_SKILL.read_text(encoding="utf-8")
-        self.assertIn("WIKI.md", content)
+        self.assertIn("openwiki.toml", content)
         self.assertIn("wiki_root", content)
         self.assertIn("wiki/index.md", content)
         self.assertIn("wiki/log.md", content)
@@ -113,7 +113,7 @@ class WikiDistillStaticTest(unittest.TestCase):
 
     def test_distill_skill_describes_delegation_to_wiki_update(self) -> None:
         content = _DISTILL_SKILL.read_text(encoding="utf-8")
-        self.assertIn("wiki-update", content)
+        self.assertIn("openwiki page update", content)
 
     def test_distill_skill_describes_delegation_to_wiki_lint(self) -> None:
         content = _DISTILL_SKILL.read_text(encoding="utf-8")
@@ -142,7 +142,7 @@ class WikiDistillStaticTest(unittest.TestCase):
 
     def test_distill_skill_describes_new_one_experience_per_page(self) -> None:
         content = _DISTILL_SKILL.read_text(encoding="utf-8")
-        self.assertIn("一条经验", content)
+        self.assertIn("每条 NEW 经验", content)
 
 
 if __name__ == "__main__":

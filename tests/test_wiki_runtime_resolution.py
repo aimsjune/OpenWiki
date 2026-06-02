@@ -4,7 +4,7 @@ import unittest
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-_DEFAULT_CONFIG_DIR = "~/.wiki-config"
+_DEFAULT_CONFIG_DIR = "~/.openwiki"
 
 _WORKFLOW_SKILLS = ("wiki-ingest", "wiki-query", "wiki-lint", "wiki-update", "wiki-distill")
 
@@ -23,7 +23,7 @@ def _absolute_config_phrase(skill_name: str) -> str:
 
 def _default_config_phrase(skill_name: str) -> str:
     if skill_name == "wiki-distill":
-        return "wiki/.wiki-config"
+        return "~/.openwiki"
     return _DEFAULT_CONFIG_DIR
 
 
@@ -44,7 +44,7 @@ class WikiRuntimeResolutionTest(unittest.TestCase):
                 )
 
                 content = skill_path.read_text(encoding="utf-8")
-                self.assertIn("WIKI.md", content)
+                self.assertIn("openwiki.toml", content)
                 self.assertIn("wiki_root", content)
                 self.assertNotIn("CLAUDE.md", content)
                 self.assertNotIn(".claude/skills/", content)

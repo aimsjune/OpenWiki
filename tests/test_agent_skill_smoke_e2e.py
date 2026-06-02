@@ -95,7 +95,7 @@ class AgentSkillSmokeE2ETest(unittest.TestCase):
         )
         init_result = run_agent_prompt(init_prompt)
         self.assertEqual(0, init_result.returncode, init_result.stderr)
-        self.assertTrue((instance.config_dir / "WIKI.md").exists())
+        self.assertTrue((instance.config_dir / "openwiki.toml").exists())
 
         source_path = fixture_root / "source.md"
         ingest_prompt = (
@@ -203,9 +203,9 @@ class AgentSkillSmokeE2ETest(unittest.TestCase):
 
         simulated_home = instance.temp_root / "simulated-home"
         simulated_home.mkdir(parents=True, exist_ok=True)
-        default_config_dir = simulated_home / ".wiki-config"
+        default_config_dir = simulated_home / ".openwiki"
         shutil.copytree(str(instance.config_dir), str(default_config_dir))
-        self.assertTrue((default_config_dir / "WIKI.md").exists())
+        self.assertTrue((default_config_dir / "openwiki.toml").exists())
 
         work_dir = instance.temp_root / "some-random-workdir"
         work_dir.mkdir(parents=True, exist_ok=True)
@@ -222,7 +222,7 @@ class AgentSkillSmokeE2ETest(unittest.TestCase):
         output_lower = query_result.stdout.lower()
         self.assertTrue(
             "default wiki config" in output_lower
-            or ".wiki-config" in output_lower,
+            or ".openwiki" in output_lower,
             f"agent output should mention default config usage: {query_result.stdout[:500]}",
         )
 

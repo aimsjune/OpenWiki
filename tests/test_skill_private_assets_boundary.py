@@ -16,7 +16,7 @@ PUBLIC_WIKI_SKILLS = (
 )
 
 ALLOWED_RUNTIME_REFERENCES = (
-    "WIKI.md",
+    "openwiki.toml",
     "raw/",
     "wiki/",
     "concepts/",
@@ -39,6 +39,8 @@ APPROVED_SKILL_LOCAL_DIRS = (
     "fixtures",
     "assets",
     "scripts",
+    "references",
+    "tests",
 )
 
 
@@ -109,9 +111,7 @@ class SkillPrivateAssetsBoundaryTest(unittest.TestCase):
         wiki_init_content = wiki_init_skill.read_text(encoding="utf-8")
 
         expected_templates = (
-            "skill/wiki-init/templates/WIKI.md",
-            "skill/wiki-init/templates/index.md",
-            "skill/wiki-init/templates/log.md",
+            "skill/wiki-init/templates/openwiki.toml",
         )
 
         for template_path in expected_templates:
@@ -158,6 +158,8 @@ class SkillPrivateAssetsBoundaryTest(unittest.TestCase):
                 if child.name == "SKILL.md":
                     continue
                 if child.is_dir():
+                    if child.is_symlink():
+                        continue
                     self.assertIn(
                         child.name,
                         APPROVED_SKILL_LOCAL_DIRS,

@@ -6,10 +6,10 @@
 
 ## What is this?
 
-LLM Wiki is a personal knowledge-base scaffold for `skill.io`-compatible agents. Raw material lives in `raw/`, structured knowledge lives in `wiki/`, and saved analyses live in `concepts/`. The repository exposes public skills through `skill/` and uses `WIKI.md` as the instance-level runtime contract.
+LLM Wiki is a personal knowledge-base scaffold for `skill.io`-compatible agents. Raw material lives in `raw/`, structured knowledge lives in `wiki/`, and saved analyses live in `concepts/`. The repository exposes public skills through `skill/` and uses `openwiki.toml` as the instance-level runtime contract.
 
 **Core idea:**
-- `WIKI.md` is the canonical runtime contract
+- `openwiki.toml` is the canonical runtime contract
 - `skill/` is the canonical public wiki skill directory
 - `config-dir` and `wiki-root` may be fully separated
 - `raw/` stores immutable sources while `wiki/` is maintained by AI
@@ -20,7 +20,7 @@ LLM Wiki is a personal knowledge-base scaffold for `skill.io`-compatible agents.
 
 ```text
 <config-dir>/
-└── WIKI.md            # runtime contract with absolute wiki_root
+└── openwiki.toml            # runtime contract with absolute wiki_root
 
 <wiki-root>/
 ├── raw/               # source material
@@ -67,19 +67,19 @@ Load the repository into your compatible agent and ensure it can read the public
 ### Usage
 
 1. Run `wiki-init`
-2. Choose a `config-dir`, such as `~/.wiki-config`
+2. Choose a `config-dir`, such as `~/.openwiki`
 3. Choose a `wiki-root`, such as `~/data/my-wiki`
-4. Let `wiki-init` write `<config-dir>/WIKI.md` with an absolute `wiki_root`
+4. Let `wiki-init` write `<config-dir>/openwiki.toml` with an absolute `wiki_root`
 5. Put source material into `<wiki-root>/raw/` and run `wiki-ingest`
 6. Use `wiki-query`, `wiki-lint`, and `wiki-update` for ongoing work
 
 Runtime discovery order:
 - prefer an explicitly provided `config-dir`
-- otherwise check the default config directory at `~/.wiki-config/WIKI.md`
-- if the default config is not found or invalid, search upward from the current working directory for `WIKI.md`
+- otherwise check the default config directory at `~/.openwiki/openwiki.toml`
+- if the default config is not found or invalid, search upward from the current working directory for `openwiki.toml`
 - if still missing, ask for an absolute config-dir or run `wiki-init`
 
-If the explicitly provided `config-dir` already contains a valid `WIKI.md`, `wiki-init` should say it is connected to the existing wiki, reuse that runtime contract, and suggest continuing with the same `config-dir` in `wiki-query`, `wiki-ingest`, `wiki-lint`, and `wiki-update`.
+If the explicitly provided `config-dir` already contains a valid `openwiki.toml`, `wiki-init` should say it is connected to the existing wiki, reuse that runtime contract, and suggest continuing with the same `config-dir` in `wiki-query`, `wiki-ingest`, `wiki-lint`, and `wiki-update`.
 
 ### E2E Testing
 
@@ -100,7 +100,7 @@ Notes:
 - `tests.test_wiki_skill_workflow_e2e` uses only local fixtures and temporary directories, with no network dependency.
 - `tests.test_agent_skill_smoke_e2e` skips the real runner scenario by default and only executes it when `SKILL_AGENT_E2E=1` is set.
 - `SKILL_AGENT_RUNNER` must point to an executable compatible wrapper, using either an absolute path or a path relative to the repository root.
-- Compatible wrapper contract: start with no extra arguments, read the prompt from `stdin`, and write results to `stdout`; by default it runs inside the `repository root`, but smoke tests may override the working directory to validate upward `WIKI.md` discovery.
+- Compatible wrapper contract: start with no extra arguments, read the prompt from `stdin`, and write results to `stdout`; by default it runs inside the `repository root`, but smoke tests may override the working directory to validate upward `openwiki.toml` discovery.
 
 ---
 
@@ -115,7 +115,7 @@ llm-wiki/
 │   ├── wiki-lint/
 │   ├── wiki-update/
 │   └── agent-browser/
-├── WIKI.md            # runtime contract for this repository instance
+├── openwiki.toml            # runtime contract for this repository instance
 ├── raw/
 ├── wiki/
 │   ├── index.md
@@ -133,7 +133,7 @@ llm-wiki/
 
 - See `skill/ASSET-LAYOUT.md` for the public wiki skill boundary rules
 - A `skill-private asset` must live inside the owning `skill/<name>/` directory tree
-- `runtime` wiki objects remain `WIKI.md` plus `raw/`, `wiki/`, and `concepts/` under `wiki_root`
+- `runtime` wiki objects remain `openwiki.toml` plus `raw/`, `wiki/`, and `concepts/` under `wiki_root`
 - Approved skill-local directory names:
   - `templates/`
   - `examples/`
@@ -148,13 +148,13 @@ llm-wiki/
 ### wiki-init
 
 - collects separate `config-dir` and `wiki-root`
-- writes `WIKI.md` into the configuration directory
+- writes `openwiki.toml` into the configuration directory
 - initializes `raw/`, `wiki/index.md`, `wiki/log.md`, `wiki/pages/`, and `concepts/` under `wiki-root`
 
 ### wiki-ingest
 
 - reads new sources and discusses takeaways first
-- resolves runtime paths through `WIKI.md`
+- resolves runtime paths through `openwiki.toml`
 - updates pages, backlinks, index, and log
 
 ### wiki-query
@@ -185,7 +185,7 @@ llm-wiki/
 
 ## Design Principles
 
-- **Neutral runtime**: runtime behavior depends on `WIKI.md`, not agent-specific file names
+- **Neutral runtime**: runtime behavior depends on `openwiki.toml`, not agent-specific file names
 - **Single public skill surface**: public skills are maintained only in `skill/`
 - **Knowledge compounding**: new knowledge should connect to the existing graph
 - **Traceable sources**: important claims should point to file paths or URLs

@@ -1,0 +1,5 @@
+wiki_root = "."
+
+[wiki]
+primary_language = "zh"
+secondary_language = "en"
