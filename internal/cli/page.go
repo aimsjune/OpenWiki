@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"flag"
 	"fmt"
 	"io"
 
@@ -110,22 +109,37 @@ func runPageGet(stdout, stderr io.Writer, opts *GlobalOptions, args []string) er
 	return nil
 }
 
-func runPageCreate(stdout, stderr io.Writer, opts *GlobalOptions, args []string) error {
-	createFlags := flag.NewFlagSet("page create", flag.ContinueOnError)
-	createFlags.SetOutput(stderr)
-
-	filePath := createFlags.String("file", "", "页面内容文件路径")
-
-	if err := createFlags.Parse(args); err != nil {
-		return err
+func extractSubcommandFlags(args []string, flagNames ...string) (flags map[string]string, positional []string) {
+	flags = make(map[string]string)
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		matched := false
+		for _, name := range flagNames {
+			if arg == "--"+name || arg == "-"+name {
+				if i+1 < len(args) {
+					flags[name] = args[i+1]
+					i++
+				}
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			positional = append(positional, arg)
+		}
 	}
+	return
+}
 
-	remaining := createFlags.Args()
-	if len(remaining) == 0 {
+func runPageCreate(stdout, stderr io.Writer, opts *GlobalOptions, args []string) error {
+	flags, positional := extractSubcommandFlags(args, "file")
+	filePath := flags["file"]
+
+	if len(positional) == 0 {
 		return fmt.Errorf("page create 需要指定 slug")
 	}
 
-	slug := remaining[0]
+	slug := positional[0]
 
 	cfg, _, err := discoverConfig(opts)
 	if err != nil {
@@ -141,16 +155,16 @@ func runPageCreate(stdout, stderr io.Writer, opts *GlobalOptions, args []string)
 	fs := wiki.NewOsFS()
 
 	var content []byte
-	if *filePath != "" {
-		content, err = fs.ReadFile(*filePath)
+	if filePath != "" {
+		content, err = fs.ReadFile(filePath)
 		if err != nil {
 			if opts.JSON {
 				return output.JSON(stdout, false, nil, &output.ErrorInfo{
 					Code:    "IO_ERROR",
-					Message: fmt.Sprintf("读取文件失败: %s", *filePath),
+					Message: fmt.Sprintf("读取文件失败: %s", filePath),
 				})
 			}
-			return fmt.Errorf("读取文件失败: %s", *filePath)
+			return fmt.Errorf("读取文件失败: %s", filePath)
 		}
 	}
 
@@ -189,21 +203,14 @@ func runPageCreate(stdout, stderr io.Writer, opts *GlobalOptions, args []string)
 }
 
 func runPageUpdate(stdout, stderr io.Writer, opts *GlobalOptions, args []string) error {
-	updateFlags := flag.NewFlagSet("page update", flag.ContinueOnError)
-	updateFlags.SetOutput(stderr)
+	flags, positional := extractSubcommandFlags(args, "file")
+	filePath := flags["file"]
 
-	filePath := updateFlags.String("file", "", "页面内容文件路径")
-
-	if err := updateFlags.Parse(args); err != nil {
-		return err
-	}
-
-	remaining := updateFlags.Args()
-	if len(remaining) == 0 {
+	if len(positional) == 0 {
 		return fmt.Errorf("page update 需要指定 slug")
 	}
 
-	slug := remaining[0]
+	slug := positional[0]
 
 	cfg, _, err := discoverConfig(opts)
 	if err != nil {
@@ -219,16 +226,16 @@ func runPageUpdate(stdout, stderr io.Writer, opts *GlobalOptions, args []string)
 	fs := wiki.NewOsFS()
 
 	var content []byte
-	if *filePath != "" {
-		content, err = fs.ReadFile(*filePath)
+	if filePath != "" {
+		content, err = fs.ReadFile(filePath)
 		if err != nil {
 			if opts.JSON {
 				return output.JSON(stdout, false, nil, &output.ErrorInfo{
 					Code:    "IO_ERROR",
-					Message: fmt.Sprintf("读取文件失败: %s", *filePath),
+					Message: fmt.Sprintf("读取文件失败: %s", filePath),
 				})
 			}
-			return fmt.Errorf("读取文件失败: %s", *filePath)
+			return fmt.Errorf("读取文件失败: %s", filePath)
 		}
 	}
 
