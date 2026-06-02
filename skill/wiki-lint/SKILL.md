@@ -29,6 +29,8 @@ Read `WIKI.md` to resolve the absolute `wiki_root` plus:
 
 Do not depend on legacy agent-specific files or compatibility directories.
 
+> **日期占位符说明：** 本文档中的 `<today>` 在执行时必须替换为实际当前日期，格式为 YYYY-MM-DD（如 `2026-05-26`）。
+
 ## Process
 
 ### 1. Build the page inventory
@@ -41,31 +43,21 @@ Read `wiki/index.md` and all files in `wiki/pages/`. Build a map of:
 
 ### 2. Run all checks
 
-**Red Errors**
+详见 `references/rules-catalog.md`。按严重程度分为三级：
 
-- broken links
-- missing frontmatter
+**Red Errors**: broken-links, missing-frontmatter
 
-**Yellow Warnings**
+**Yellow Warnings**: orphan-pages, contradictions, stale-claims, content-not-chinese-primary, missing-chinese-title, missing-term-glossary, missing-bilingual-tags, missing-scope-fields, invalid-scope-level, invalid-scope-code-format, scope-level-code-mismatch
 
-- orphan pages
-- contradictions
-- stale claims
-- content-not-chinese-primary — 页面正文中文占比低于 60%。排除：代码块（` ```...``` `）、行内代码（`` `code` ``）、URL（`https://...`）、YAML frontmatter（`---...---`）、术语首次标注括号内英文（`中文术语（English）`）
-- missing-chinese-title — h1 标题不包含任何中文字符。仅检查 Markdown h1，不检查 frontmatter 中的 `title` 字段
-- missing-term-glossary — 英文多词术语（2 个及以上单词）在页面中首次出现时未附中文解释。支持两种标注形式：`中文术语（English Term）` 或 `English Term（中文术语）`。单字术语（如 "Go"、"Rust"）不触发
-- missing-bilingual-tags — frontmatter 中 `tags` 仅有英文标签无中文标签。仅当 `primary_language` 为 `zh` 且 `secondary_language` 为 `en` 时启用。只要存在任意中文标签即满足
-- missing-scope-fields — 页面 frontmatter 缺少 `scope_level` 或 `scope_code` 字段（向后兼容，Yellow Warning 级别）
-- invalid-scope-level — `scope_level` 不在合法枚举值中（合法值：`repo`、`domain`、`company`、`industry`、`wisdom`）
-- invalid-scope-code-format — `scope_code` 不符合 slug 规则（全小写、连字符、无特殊字符，中文代号须翻译为英文）
-- scope-level-code-mismatch — `scope_level` 为 `wisdom` 但 `scope_code` 不为 `"wisdom"`
+**语言规则启用条件**：仅当 `WIKI.md` 中 `primary_language` 为 `zh` 时启用语言规则。若 `WIKI.md` 不含 `primary_language` 字段（旧格式），默认视为 `zh`。
 
-**语言规则启用条件**：仅当 `WIKI.md` 中 `primary_language` 为 `zh` 时启用以上 4 条语言规则。若 `primary_language` 不为 `zh`，跳过全部语言规则。若 `WIKI.md` 不含 `primary_language` 字段（旧格式），默认视为 `zh`。
+**英文豁免清单**：详见 `references/exemption-checklist.md`。
 
-**Blue Info**
+**Blue Info**: missing-concept-pages, missing-cross-references, hardcoded-or-literal-today
 
-- missing concept pages
-- missing cross-references
+### 2.1 验证输出完整性
+
+检查是否所有页面都被扫描（页面数与 `wiki/pages/` 中文件数一致），所有 Red Errors 是否都有对应的修复建议，所有 Yellow Warnings 是否都有对应的说明。若发现遗漏，补充后再生成报告。
 
 ### 3. Write the lint report
 

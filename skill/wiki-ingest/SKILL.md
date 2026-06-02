@@ -31,6 +31,8 @@ Read `WIKI.md` to resolve:
 
 Do not infer these paths from `cwd`, legacy agent-specific files, or compatibility directories.
 
+> **日期占位符说明：** 本文档中的 `<today>` 在执行时必须替换为实际当前日期，格式为 YYYY-MM-DD（如 `2026-05-26`）。
+
 ## Process
 
 ### 1. Accept the source
@@ -53,17 +55,9 @@ Tell the user:
 - what entities or concepts this introduces or updates
 - whether it contradicts anything already in the wiki (read `wiki/index.md` and relevant pages to check)
 
-**建议适用范围**：分析源内容，建议 `scope_level` 和 `scope_code`。参考下表：
+**建议适用范围**：分析源内容，建议 `scope_level` 和 `scope_code`。枚举定义详见 `references/page-template.md`。
 
-| scope_level | 中文名 | 含义 |
-|-------------|--------|------|
-| repo | 代码仓库 | 单个代码仓库级别 |
-| domain | 领域 | 跨若干个代码仓库适用 |
-| company | 公司 | 跨若干个领域适用 |
-| industry | 行业 | 跨若干个公司适用 |
-| wisdom | 智慧 | 高度抽象，跨多行业多场景适用 |
-
-展示格式：`适用范围: <scope_level 中文名>（<scope_code>）`。scope_code 遵循 slug 规则（小写、连字符、无特殊字符）。
+展示格式：`适用范围: <scope_level 中文名>（<scope_code>）`。
 
 Ask: **"Anything specific you want me to emphasize or de-emphasize? 适用范围是否合适？"**
 
@@ -82,50 +76,19 @@ For core concepts or key claims, use `agent-browser` to fetch current authoritat
 
 ### 5. Generate the slug
 
-Lowercase, hyphens, no special characters.
-
-- **英文源标题**：直接 slugify。
-  Example: `Attention Is All You Need` -> `attention-is-all-you-need`
-- **中文源标题**：翻译为英文后 slugify，不使用拼音。
-  Example: `依赖注入模式` -> `dependency-injection-pattern`（非 `yi-lai-zhu-ru-mo-shi`）
+详见 `references/slug-rules.md`。核心规则：全小写、连字符、无特殊字符。中文源标题翻译为英文后 slugify，不使用拼音。
 
 ### 6. Write or update wiki pages
 
-Write to `wiki/pages/<slug>.md` under `wiki_root`:
+Write to `wiki/pages/<slug>.md` under `wiki_root`。页面模板详见 `references/page-template.md`。
 
-```markdown
----
-title: <source title>
-tags: [<relevant tags>]
-sources: <number of sources>
-updated: <today>
-scope_level: <repo|domain|company|industry|wisdom>
-scope_code: <slug>
----
+### 6.1 验证写入
 
-# <Source Title>
+重新读取刚写入的页面文件，执行以下检查：
 
-**来源：** <original URL or local path>
-**摄入日期：** <today>
-**类型：** <paper | article | transcript | code | other>
-**适用范围：** <scope_level 中文名>（<scope_code>）
-
-## 核心定义
-
-<Definition of core concepts>
-
-## 关键要点
-
-- <bullet>
-
-## 相关主题
-
-- [[related-slug]] — <relationship>
-
-## 开放问题
-
-<If any>
-```
+- frontmatter 是否包含所有必填字段（title、tags、updated、scope_level、scope_code）
+- [[交叉引用]] 是否指向存在的页面（在 `wiki/pages/` 中可找到对应文件）
+- 若验证失败，报告具体错误并建议修复方案
 
 ### 7. Update related entity or concept pages
 
@@ -182,28 +145,4 @@ Always append:
 
 ### 12. Cloud Sync
 
-Sync the entire `wiki_root` to remote object storage using `pcloud`.
-
-**Pre-check**: If `remote_sync_path` is empty, skip sync silently. If `pcloud` CLI is not available (not installed or not configured at `~/.config/pcloud/config.toml`), warn the user and skip sync — do not block ingest.
-
-**If `auto_sync` is `true`**:
-
-Run `pcloud sync <wiki_root> <remote_sync_path>` directly without confirmation.
-
-**If `auto_sync` is `false` (default)**:
-
-1. Run `pcloud sync <wiki_root> <remote_sync_path> --dry-run` to preview changes
-2. Show the user a summary of uploads and downloads
-3. Ask: **"Execute sync? [Y/n]"**
-4. On confirmation, run `pcloud sync <wiki_root> <remote_sync_path>`
-5. On skip, report "cloud sync skipped" and continue
-
-**After sync succeeds**, append to `wiki/log.md`:
-
-```markdown
-## [<today>] sync | <remote_sync_path>
-- Upload: N files
-- Download: M files
-```
-
-**On failure**: Report the error but do NOT roll back ingest. The ingest pages, index, and log are already committed. Sync failure does not affect the wiki state.
+详见 `references/cloud-sync.md`。使用 `pcloud` 将 `wiki_root` 同步到远程对象存储。同步失败不阻塞 ingest。

@@ -1,6 +1,7 @@
 ---
 name: wiki-update
 description: Use when revising existing wiki pages because knowledge has changed, a new piece of information updates or contradicts existing content, or the user wants to directly edit wiki content with LLM assistance.
+composes: [wiki-ingest, wiki-lint, wiki-init]
 ---
 
 # Wiki Update

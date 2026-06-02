@@ -27,6 +27,8 @@ Read `WIKI.md` to resolve the absolute `wiki_root` plus:
 
 Do not depend on legacy agent-specific files or compatibility directories.
 
+> **日期占位符说明：** 本文档中的 `<today>` 在执行时必须替换为实际当前日期，格式为 YYYY-MM-DD（如 `2026-05-26`）。
+
 ## Process
 
 ### 1. Read `wiki/index.md` first
