@@ -41,7 +41,7 @@ The source can be:
 - **File path** — read it directly from `raw/` or another user-provided local path
 - **URL** — use the `agent-browser` skill to fetch it; snapshot to `raw/` if needed
 - **Pasted text** — use what the user provided
-
+- **当前会话上下文** — discussion history so far
 ### 2. Read the source in full
 
 Read all content. For long sources, read in sections. Do not skip.

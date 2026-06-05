@@ -24,17 +24,12 @@ func runInit(stdout, stderr io.Writer, opts *GlobalOptions, args []string) error
 	}
 
 	remaining := initFlags.Args()
+	var wikiRoot string
 	if len(remaining) == 0 {
-		if opts.JSON {
-			return output.JSON(stdout, false, nil, &output.ErrorInfo{
-				Code:    "INVALID_ARG",
-				Message: "缺少 wiki-root 参数",
-			})
-		}
-		return fmt.Errorf("缺少 wiki-root 参数\n用法: openwiki init <wiki-root> [选项]")
+		wikiRoot = "./openwiki/"
+	} else {
+		wikiRoot = remaining[0]
 	}
-
-	wikiRoot := remaining[0]
 
 	cfg := &config.Config{
 		WikiRoot: wikiRoot,

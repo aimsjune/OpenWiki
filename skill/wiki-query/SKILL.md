@@ -52,9 +52,36 @@ openwiki page get <slug> --json
 
 Read the identified pages in full. Follow one level of `[[slug]]` links if they point to pages that seem relevant to the question.
 
-### 3. Network supplement (if needed)
+### 3. Outside supplement (if needed)
 
-If local wiki information is insufficient or needs verification for time-sensitive content, use `agent-browser` to fetch current sources. Prioritize authoritative sites:
+**铁律：外部搜索必须并行执行。** 当本地 wiki 无法满足查询时，以下三个渠道的搜索必须在同一轮 tool call 中同时发起，禁止串行逐个执行。违反此规则属于 Common Mistake。
+
+同时，Step 2 的 grep/页面读取与 Step 3 的外部搜索之间没有依赖关系——一旦 Step 1 确认 wiki 中无精确匹配，即可将 grep + 外部搜索全部并行发出。
+
+**并行启动以下搜索（必须在同一轮 tool call 中完成）：**
+
+| 渠道 | 工具 | 命令 / 用法 |
+|------|------|-------------|
+| Web 搜索 | `WebSearch` 工具 | 直接调用，使用用户原始查询中的核心术语。可同时发起多个不同关键词的搜索 |
+| ByteTech 内部文章 | `RunCommand` | `python3 scripts/bytetech_api.py search "<关键词>"`（在 bytetech skill 目录下执行） |
+| 飞书文档 | `RunCommand` | `lark-cli docs +search --as user --query "<关键词>"` |
+
+三个搜索的关键词应保持一致，使用用户原始查询中的核心术语。
+
+#### lark-cli 文档搜索详细用法
+
+飞书文档搜索用于查找字节跳动内部知识库中的规范文档：
+
+```bash
+# 搜索飞书云文档（必须使用 --query flag，不支持位置参数）
+lark-cli docs +search --as user --query "<关键词>"
+```
+
+搜索结果返回文档 token 和标题，可进一步用 `lark-cli docs +fetch --as user --doc "<token>"` 获取正文。
+
+#### agent-browser（仅当需要抓取特定 URL 时使用）
+
+当搜索结果返回了需要深入阅读的特定网页时，使用 `agent-browser` 抓取内容。优先使用权威站点：
 
 - **General concepts**: en.wikipedia.org / zh.wikipedia.org
 - **Tech/Programming**: docs.python.org, developer.mozilla.org, arxiv.org, github.com
@@ -93,3 +120,5 @@ If no:
 - **Answering from memory** — always read the wiki pages first
 - **Skipping the save offer** — always offer
 - **No citations** — every factual claim should trace back to a `[[slug]]` or URL
+- **串行执行外部搜索** — Step 3 的 Web 搜索、ByteTech 搜索、lark-cli 搜索必须在同一轮 tool call 中并行发起，禁止逐个串行调用
+- **跳过 lark-cli 搜索** — 当查询涉及字节跳动内部规范/文档时，lark-cli 搜索是必选项，不可省略
