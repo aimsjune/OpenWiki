@@ -22,6 +22,7 @@ Read `openwiki.toml` to resolve the absolute `wiki_root` plus:
 - `wiki/index.md`
 - `wiki/log.md`
 - `wiki/pages/`
+- `entities/`
 - `concepts/`
 - `primary_language`
 - `secondary_language`
@@ -52,7 +53,7 @@ Read `wiki/index.md` and all files in `wiki/pages/`. Build a map of:
 
 **Red Errors**: broken-links, missing-frontmatter
 
-**Yellow Warnings**: orphan-pages, contradictions, stale-claims, content-not-chinese-primary, missing-chinese-title, missing-term-glossary, missing-bilingual-tags, missing-scope-fields, invalid-scope-level, invalid-scope-code-format, scope-level-code-mismatch
+**Yellow Warnings**: orphan-pages, contradictions, stale-claims, content-not-chinese-primary, missing-chinese-title, missing-term-glossary, missing-bilingual-tags, missing-scope-fields, invalid-scope-level, invalid-scope-code-format, scope-level-code-mismatch, invalid-entity-type
 
 **语言规则启用条件**：仅当 `openwiki.toml` 中 `primary_language` 为 `zh` 时启用语言规则。若 `openwiki.toml` 不含 `primary_language` 字段（旧格式），默认视为 `zh`。
 

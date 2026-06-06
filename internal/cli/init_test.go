@@ -39,6 +39,7 @@ func TestInitCreatesDirectoryStructure(t *testing.T) {
 		"wiki/pages",
 		"raw",
 		"concepts",
+		"entities",
 	}
 	for _, d := range expectedDirs {
 		p := filepath.Join(wikiRoot, d)
@@ -107,6 +108,7 @@ func TestInitDefaultWikiRoot(t *testing.T) {
 		"openwiki/wiki/pages",
 		"openwiki/raw",
 		"openwiki/concepts",
+		"openwiki/entities",
 	}
 	for _, d := range expectedDirs {
 		p := filepath.Join(dir, d)

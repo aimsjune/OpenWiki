@@ -131,9 +131,23 @@ func extractSubcommandFlags(args []string, flagNames ...string) (flags map[strin
 	return
 }
 
+func parsePageType(s string) (wiki.PageType, error) {
+	switch s {
+	case "", "page":
+		return wiki.PageTypePage, nil
+	case "entity":
+		return wiki.PageTypeEntity, nil
+	case "concept":
+		return wiki.PageTypeConcept, nil
+	default:
+		return "", fmt.Errorf("无效的页面类型: %s（支持: page, entity, concept）", s)
+	}
+}
+
 func runPageCreate(stdout, stderr io.Writer, opts *GlobalOptions, args []string) error {
-	flags, positional := extractSubcommandFlags(args, "file")
+	flags, positional := extractSubcommandFlags(args, "file", "type")
 	filePath := flags["file"]
+	typeStr := flags["type"]
 
 	if len(positional) == 0 {
 		return fmt.Errorf("page create 需要指定 slug")
@@ -179,7 +193,18 @@ func runPageCreate(stdout, stderr io.Writer, opts *GlobalOptions, args []string)
 		return err
 	}
 
-	if err := wiki.CreatePage(fs, cfg.WikiRoot, page); err != nil {
+	pt, err := parsePageType(typeStr)
+	if err != nil {
+		if opts.JSON {
+			return output.JSON(stdout, false, nil, &output.ErrorInfo{
+				Code:    "INVALID_ARG",
+				Message: err.Error(),
+			})
+		}
+		return err
+	}
+
+	if err := wiki.CreatePage(fs, cfg.WikiRoot, page, pt); err != nil {
 		code := "INTERNAL"
 		if err.Error() == fmt.Sprintf("页面已存在: %s", slug) {
 			code = "PAGE_ALREADY_EXISTS"
@@ -203,8 +228,9 @@ func runPageCreate(stdout, stderr io.Writer, opts *GlobalOptions, args []string)
 }
 
 func runPageUpdate(stdout, stderr io.Writer, opts *GlobalOptions, args []string) error {
-	flags, positional := extractSubcommandFlags(args, "file")
+	flags, positional := extractSubcommandFlags(args, "file", "type")
 	filePath := flags["file"]
+	typeStr := flags["type"]
 
 	if len(positional) == 0 {
 		return fmt.Errorf("page update 需要指定 slug")
@@ -250,19 +276,46 @@ func runPageUpdate(stdout, stderr io.Writer, opts *GlobalOptions, args []string)
 		return err
 	}
 
-	if err := wiki.UpdatePage(fs, cfg.WikiRoot, page); err != nil {
-		code := "INTERNAL"
-		if err.Error() == fmt.Sprintf("页面不存在: %s", slug) {
-			code = "PAGE_NOT_FOUND"
+	if typeStr != "" {
+		pt, err := parsePageType(typeStr)
+		if err != nil {
+			if opts.JSON {
+				return output.JSON(stdout, false, nil, &output.ErrorInfo{
+					Code:    "INVALID_ARG",
+					Message: err.Error(),
+				})
+			}
+			return err
 		}
+		if err := wiki.UpdatePage(fs, cfg.WikiRoot, page, pt); err != nil {
+			code := "INTERNAL"
+			if err.Error() == fmt.Sprintf("页面不存在: %s", slug) {
+				code = "PAGE_NOT_FOUND"
+			}
 
-		if opts.JSON {
-			return output.JSON(stdout, false, nil, &output.ErrorInfo{
-				Code:    code,
-				Message: err.Error(),
-			})
+			if opts.JSON {
+				return output.JSON(stdout, false, nil, &output.ErrorInfo{
+					Code:    code,
+					Message: err.Error(),
+				})
+			}
+			return err
 		}
-		return err
+	} else {
+		if err := wiki.UpdatePage(fs, cfg.WikiRoot, page); err != nil {
+			code := "INTERNAL"
+			if err.Error() == fmt.Sprintf("页面不存在: %s", slug) {
+				code = "PAGE_NOT_FOUND"
+			}
+
+			if opts.JSON {
+				return output.JSON(stdout, false, nil, &output.ErrorInfo{
+					Code:    code,
+					Message: err.Error(),
+				})
+			}
+			return err
+		}
 	}
 
 	if opts.JSON {

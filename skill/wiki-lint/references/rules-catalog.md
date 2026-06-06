@@ -204,6 +204,22 @@
 
 ---
 
+### invalid-entity-type
+
+**触发条件**: `entities/` 目录下的页面 frontmatter 中 `entity_type` 不在合法枚举值中。
+
+**合法值**: `person`、`org`、`project`、`tool`
+
+**检查逻辑**:
+1. 扫描 `entities/*.md` 中的 frontmatter
+2. 检查 `entity_type` 字段是否存在
+3. 检查是否在合法枚举值中
+4. 缺失或不在合法值时触发
+
+**修复建议**: 将 `entity_type` 修正为合法值之一（person/org/project/tool）。
+
+---
+
 ## Blue Info
 
 ### missing-concept-pages

@@ -79,3 +79,54 @@ scope_code: <slug>
 | 关键要点 | 要点列表，每条一个 bullet |
 | 相关主题 | `[[slug]]` 交叉引用 + 关系描述 |
 | 开放问题 | 待探索的问题（可选） |
+
+---
+
+## 实体页面模板
+
+`entities/` 目录下的页面使用以下模板：
+
+```yaml
+---
+title: <entity name>
+entity_type: <person|org|project|tool>
+tags: [entity, <type-specific tags>]
+sources: <number of sources>
+updated: <today>
+scope_level: <repo|domain|company|industry|wisdom>
+scope_code: <slug>
+---
+```
+
+```markdown
+# <Entity Name>
+
+**类型：** <entity_type 中文名>
+**摄入日期：** <today>
+**适用范围：** <scope_level 中文名>（<scope_code>）
+
+## 核心身份
+
+<实体的一句话定义，说明它是什么>
+
+## 关键信息
+
+- <bullet>
+
+## 关联实体
+
+- [[related-entity-slug]] — <relationship>
+
+## 相关概念
+
+- [[concept-slug]] — <relationship>
+```
+
+### entity_type 枚举
+
+| 值 | 中文名 | 含义 |
+|----|--------|------|
+| `person` | 人物 | 个人（研究者、工程师、作者等） |
+| `org` | 组织 | 公司、团队、机构 |
+| `project` | 项目 | 开源项目、产品、工具集 |
+| `tool` | 工具 | 软件工具、框架、库 |

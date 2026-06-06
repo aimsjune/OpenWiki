@@ -54,10 +54,10 @@ func setupTestWiki(t *testing.T, dir string) string {
 
 ## 资料页
 
-| Slug | 标题 | 标签 | 适用范围 | 最后更新 |
-|------|------|------|----------|----------|
-| page-a | 页面A | test, demo | industry/test | 2026-06-01 |
-| page-b | 页面B | guide | repo/my-repo | 2026-06-02 |
+| Slug | 标题 | 类型 | 标签 | 适用范围 | 最后更新 |
+|------|------|------|------|----------|----------|
+| page-a | 页面A | page | test, demo | industry/test | 2026-06-01 |
+| page-b | 页面B | page | guide | repo/my-repo | 2026-06-02 |
 `
 	indexPath := filepath.Join(wikiRoot, "wiki", "index.md")
 	if err := os.WriteFile(indexPath, []byte(indexContent), 0644); err != nil {

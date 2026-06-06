@@ -24,6 +24,7 @@ Read `openwiki.toml` to resolve:
 - `wiki/index.md`
 - `wiki/log.md`
 - `wiki/pages/`
+- `entities/`
 - `concepts/`
 - `remote_sync_path`
 - `auto_sync`
@@ -107,6 +108,22 @@ For each entity or concept touched by this source:
 
 - **Page exists:** read it, update the relevant section, update `updated`
 - **Page does not exist:** create it with the same frontmatter format
+- **Entity pages** go to `entities/` directory (use `--type entity`)
+- **Concept pages** go to `concepts/` directory (use `--type concept`)
+- **Summary pages** go to `wiki/pages/` directory (default)
+
+使用 CLI 创建不同类型的页面：
+
+```bash
+# 实体页面
+openwiki page create <slug> --file <content-file> --type entity --json
+
+# 概念页面
+openwiki page create <slug> --file <content-file> --type concept --json
+
+# 资料页面（默认）
+openwiki page create <slug> --file <content-file> --json
+```
 
 ### 8. Backlink audit
 

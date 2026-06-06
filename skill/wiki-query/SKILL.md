@@ -22,6 +22,7 @@ Read `openwiki.toml` to resolve the absolute `wiki_root` plus:
 - `wiki/index.md`
 - `wiki/log.md`
 - `wiki/pages/`
+- `entities/`
 - `concepts/`
 
 Do not depend on legacy agent-specific files or compatibility directories.
@@ -44,7 +45,7 @@ Identify which pages are likely relevant. Do not answer from general knowledge f
 
 ### 2. Read relevant pages
 
-Use the CLI to read pages:
+Use the CLI to read pages (supports cross-directory search across `wiki/pages/`, `entities/`, `concepts/`):
 
 ```bash
 openwiki page get <slug> --json

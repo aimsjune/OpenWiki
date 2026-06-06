@@ -373,3 +373,102 @@ func TestPageCreateEmptyFile(t *testing.T) {
 		t.Error("expected page file to exist even with empty content")
 	}
 }
+
+func TestPageCreateWithTypeFlag(t *testing.T) {
+	dir := t.TempDir()
+	tomlPath := setupTestWiki(t, dir)
+
+	contentFile := filepath.Join(dir, "entity.md")
+	content := "---\ntitle: 实体页面\nentity_type: person\ntags: [entity]\nscope_level: industry\nscope_code: wisdom\nupdated: 2026-06-06\n---\n\n实体页面内容\n"
+	if err := os.WriteFile(contentFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write content file: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+
+	err := cli.RunWithIO([]string{"--config", tomlPath, "page", "create", "entity-page", "--file", contentFile, "--type", "entity", "--json"}, "1.0.0", "2026-06-01T00:00:00Z", &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var resp output.Response
+	if err := json.Unmarshal(stdout.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if !resp.Success {
+		t.Fatalf("expected success=true, got error: %v", resp.Error)
+	}
+
+	wikiRoot := filepath.Dir(tomlPath)
+	entityPath := filepath.Join(wikiRoot, "entities", "entity-page.md")
+	if _, err := os.Stat(entityPath); os.IsNotExist(err) {
+		t.Error("expected entity page file to exist in entities/")
+	}
+}
+
+func TestPageCreateDefaultType(t *testing.T) {
+	dir := t.TempDir()
+	tomlPath := setupTestWiki(t, dir)
+
+	contentFile := filepath.Join(dir, "default-type.md")
+	content := "---\ntitle: 默认类型\ntags: [test]\nscope_level: industry\nscope_code: test\nupdated: 2026-06-06\n---\n\n默认类型页面\n"
+	if err := os.WriteFile(contentFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write content file: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+
+	err := cli.RunWithIO([]string{"--config", tomlPath, "page", "create", "default-type", "--file", contentFile, "--json"}, "1.0.0", "2026-06-01T00:00:00Z", &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var resp output.Response
+	if err := json.Unmarshal(stdout.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if !resp.Success {
+		t.Fatalf("expected success=true, got error: %v", resp.Error)
+	}
+
+	wikiRoot := filepath.Dir(tomlPath)
+	pagePath := filepath.Join(wikiRoot, "wiki", "pages", "default-type.md")
+	if _, err := os.Stat(pagePath); os.IsNotExist(err) {
+		t.Error("expected page file to exist in wiki/pages/")
+	}
+}
+
+func TestPageCreateInvalidType(t *testing.T) {
+	dir := t.TempDir()
+	tomlPath := setupTestWiki(t, dir)
+
+	contentFile := filepath.Join(dir, "invalid-type.md")
+	content := "---\ntitle: 无效类型\ntags: [test]\nscope_level: industry\nscope_code: test\nupdated: 2026-06-06\n---\n\n无效类型页面\n"
+	if err := os.WriteFile(contentFile, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write content file: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+
+	err := cli.RunWithIO([]string{"--config", tomlPath, "page", "create", "invalid-type", "--file", contentFile, "--type", "foo", "--json"}, "1.0.0", "2026-06-01T00:00:00Z", &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var resp output.Response
+	if err := json.Unmarshal(stdout.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if resp.Success {
+		t.Fatal("expected success=false for invalid type")
+	}
+	if resp.Error == nil {
+		t.Fatal("expected error info")
+	}
+	if resp.Error.Code != "INVALID_ARG" {
+		t.Errorf("expected error code INVALID_ARG, got %s", resp.Error.Code)
+	}
+}

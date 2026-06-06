@@ -12,13 +12,18 @@ const indexTemplate = `# Wiki 索引
 
 ## 资料页
 
-| Slug | 标题 | 标签 | 适用范围 | 最后更新 |
-|------|------|------|----------|----------|
+| Slug | 标题 | 类型 | 标签 | 适用范围 | 最后更新 |
+|------|------|------|------|----------|----------|
+
+## 实体页
+
+| Slug | 标题 | 类型 | 标签 | 适用范围 | 最后更新 |
+|------|------|------|------|----------|----------|
 
 ## 概念页
 
-| Slug | 标题 | 标签 | 适用范围 | 最后更新 |
-|------|------|------|----------|----------|
+| Slug | 标题 | 类型 | 标签 | 适用范围 | 最后更新 |
+|------|------|------|------|----------|----------|
 
 ## 适用范围
 
@@ -55,6 +60,7 @@ func initInternal(fs FS, root string, cfg interface{}) error {
 		filepath.Join(root, "wiki", "pages"),
 		filepath.Join(root, "raw"),
 		filepath.Join(root, "concepts"),
+		filepath.Join(root, "entities"),
 	}
 	for _, dir := range dirs {
 		if err := fs.MkdirAll(dir, 0755); err != nil {

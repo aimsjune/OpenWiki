@@ -9,9 +9,29 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// PageType 页面类型
+type PageType string
+
+const (
+	PageTypePage    PageType = "page"
+	PageTypeEntity  PageType = "entity"
+	PageTypeConcept PageType = "concept"
+)
+
+// pageDirs 每种类型对应的存储目录（相对于 wiki_root）
+var pageDirs = map[PageType]string{
+	PageTypePage:    "wiki/pages",
+	PageTypeEntity:  "entities",
+	PageTypeConcept: "concepts",
+}
+
+// searchOrder 跨目录搜索的优先级
+var searchOrder = []PageType{PageTypePage, PageTypeEntity, PageTypeConcept}
+
 type PageMeta struct {
 	Slug       string   `json:"slug"`
 	Title      string   `json:"title"`
+	Type       string   `json:"type"`
 	Tags       []string `json:"tags"`
 	ScopeLevel string   `json:"scope_level"`
 	ScopeCode  string   `json:"scope_code"`
@@ -40,10 +60,13 @@ func parseIndexTable(content string) []PageMeta {
 	var pages []PageMeta
 	lines := strings.Split(content, "\n")
 	inTable := false
+	hasTypeColumn := false
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if strings.HasPrefix(line, "| Slug |") {
 			inTable = true
+			// 检测是否有"类型"列
+			hasTypeColumn = strings.Contains(line, "类型")
 			continue
 		}
 		if strings.HasPrefix(line, "|---") {
@@ -58,7 +81,11 @@ func parseIndexTable(content string) []PageMeta {
 		}
 
 		cols := strings.Split(line, "|")
-		if len(cols) < 6 {
+		minCols := 6
+		if hasTypeColumn {
+			minCols = 7
+		}
+		if len(cols) < minCols {
 			continue
 		}
 
@@ -68,9 +95,19 @@ func parseIndexTable(content string) []PageMeta {
 		}
 
 		title := strings.TrimSpace(cols[2])
-		tagsStr := strings.TrimSpace(cols[3])
-		scopeStr := strings.TrimSpace(cols[4])
-		updated := strings.TrimSpace(cols[5])
+		pageType := "page"
+		tagsCol := 3
+		scopeCol := 4
+		updatedCol := 5
+		if hasTypeColumn {
+			pageType = strings.TrimSpace(cols[3])
+			tagsCol = 4
+			scopeCol = 5
+			updatedCol = 6
+		}
+		tagsStr := strings.TrimSpace(cols[tagsCol])
+		scopeStr := strings.TrimSpace(cols[scopeCol])
+		updated := strings.TrimSpace(cols[updatedCol])
 
 		var tags []string
 		for _, t := range strings.Split(tagsStr, ",") {
@@ -93,6 +130,7 @@ func parseIndexTable(content string) []PageMeta {
 		pages = append(pages, PageMeta{
 			Slug:       slug,
 			Title:      title,
+			Type:       pageType,
 			Tags:       tags,
 			ScopeLevel: scopeLevel,
 			ScopeCode:  scopeCode,
@@ -103,32 +141,45 @@ func parseIndexTable(content string) []PageMeta {
 }
 
 func GetPage(fs FS, root, slug string) (*Page, error) {
-	pages, err := GetPages(fs, root, []string{slug})
+	pagePath, _, err := resolvePagePath(fs, root, slug)
 	if err != nil {
 		return nil, err
 	}
-	if len(pages) == 0 {
-		return nil, fmt.Errorf("页面不存在: %s", slug)
+
+	data, err := fs.ReadFile(pagePath)
+	if err != nil {
+		return nil, fmt.Errorf("读取页面失败 %s: %w", slug, err)
 	}
-	return pages[0], nil
+
+	page, err := parsePage(slug, pagePath, string(data))
+	if err != nil {
+		return nil, fmt.Errorf("解析页面失败 %s: %w", slug, err)
+	}
+	return page, nil
 }
 
 func GetPages(fs FS, root string, slugs []string) ([]*Page, error) {
 	var pages []*Page
 	for _, slug := range slugs {
-		pagePath := filepath.Join(root, "wiki", "pages", slug+".md")
-		data, err := fs.ReadFile(pagePath)
+		page, err := GetPage(fs, root, slug)
 		if err != nil {
-			return nil, fmt.Errorf("读取页面失败 %s: %w", slug, err)
-		}
-
-		page, err := parsePage(slug, pagePath, string(data))
-		if err != nil {
-			return nil, fmt.Errorf("解析页面失败 %s: %w", slug, err)
+			return nil, err
 		}
 		pages = append(pages, page)
 	}
 	return pages, nil
+}
+
+// resolvePagePath 按 searchOrder 查找页面文件，返回路径和类型
+func resolvePagePath(fs FS, root, slug string) (string, PageType, error) {
+	for _, pt := range searchOrder {
+		dir := pageDirs[pt]
+		pagePath := filepath.Join(root, dir, slug+".md")
+		if _, err := fs.Stat(pagePath); err == nil {
+			return pagePath, pt, nil
+		}
+	}
+	return "", "", fmt.Errorf("页面不存在: %s", slug)
 }
 
 func parsePage(slug, path, content string) (*Page, error) {
@@ -162,10 +213,21 @@ func ParsePageContent(slug, content string) (*Page, error) {
 	return parsePage(slug, "", content)
 }
 
-func CreatePage(fs FS, root string, page *Page) error {
-	pagePath := filepath.Join(root, "wiki", "pages", page.Slug+".md")
+func CreatePage(fs FS, root string, page *Page, pageType ...PageType) error {
+	pt := PageTypePage
+	if len(pageType) > 0 {
+		pt = pageType[0]
+	}
+
+	dir := pageDirs[pt]
+	pagePath := filepath.Join(root, dir, page.Slug+".md")
 	if _, err := fs.Stat(pagePath); err == nil {
 		return fmt.Errorf("页面已存在: %s", page.Slug)
+	}
+
+	// 确保目录存在
+	if err := fs.MkdirAll(filepath.Join(root, dir), 0755); err != nil {
+		return fmt.Errorf("创建目录失败: %w", err)
 	}
 
 	content := buildPageContent(page)
@@ -173,7 +235,7 @@ func CreatePage(fs FS, root string, page *Page) error {
 		return fmt.Errorf("写入页面失败: %w", err)
 	}
 
-	if err := addToIndex(fs, root, page); err != nil {
+	if err := addToIndex(fs, root, page, pt); err != nil {
 		return fmt.Errorf("更新 index.md 失败: %w", err)
 	}
 
@@ -197,7 +259,7 @@ func buildPageContent(page *Page) string {
 	return sb.String()
 }
 
-func addToIndex(fs FS, root string, page *Page) error {
+func addToIndex(fs FS, root string, page *Page, pt PageType) error {
 	indexPath := filepath.Join(root, "wiki", "index.md")
 	data, err := fs.ReadFile(indexPath)
 	if err != nil {
@@ -237,18 +299,46 @@ func addToIndex(fs FS, root string, page *Page) error {
 		}
 	}
 
-	newLine := fmt.Sprintf("| %s | %s | %s | %s | %s |", page.Slug, title, tags, scopeStr, updated)
+	newLine := fmt.Sprintf("| %s | %s | %s | %s | %s | %s |", page.Slug, title, string(pt), tags, scopeStr, updated)
 
 	lines := strings.Split(content, "\n")
+
+	// 找到所有分隔线位置，按类型选择正确的插入位置
+	var separatorPositions []int
+	for i, line := range lines {
+		if strings.HasPrefix(strings.TrimSpace(line), "|---") {
+			separatorPositions = append(separatorPositions, i)
+		}
+	}
+
+	// 根据类型选择插入位置：page→第1个, entity→第2个, concept→第3个
+	insertAfter := 0
+	switch pt {
+	case PageTypeEntity:
+		if len(separatorPositions) >= 2 {
+			insertAfter = separatorPositions[1]
+		} else if len(separatorPositions) >= 1 {
+			insertAfter = separatorPositions[0]
+		}
+	case PageTypeConcept:
+		if len(separatorPositions) >= 3 {
+			insertAfter = separatorPositions[2]
+		} else if len(separatorPositions) >= 1 {
+			insertAfter = separatorPositions[0]
+		}
+	default:
+		if len(separatorPositions) >= 1 {
+			insertAfter = separatorPositions[0]
+		}
+	}
+
 	var result []string
 	inserted := false
 	for i, line := range lines {
 		result = append(result, line)
-		if !inserted && strings.HasPrefix(strings.TrimSpace(line), "| Slug |") {
-			if i+2 < len(lines) && strings.HasPrefix(strings.TrimSpace(lines[i+1]), "|---") {
-				result = append(result, newLine)
-				inserted = true
-			}
+		if !inserted && i == insertAfter {
+			result = append(result, newLine)
+			inserted = true
 		}
 	}
 
@@ -259,15 +349,37 @@ func addToIndex(fs FS, root string, page *Page) error {
 	return fs.WriteFile(indexPath, []byte(strings.Join(result, "\n")), 0644)
 }
 
-func UpdatePage(fs FS, root string, page *Page) error {
-	pagePath := filepath.Join(root, "wiki", "pages", page.Slug+".md")
-	if _, err := fs.Stat(pagePath); err != nil {
-		return fmt.Errorf("页面不存在: %s", page.Slug)
+func UpdatePage(fs FS, root string, page *Page, newType ...PageType) error {
+	pagePath, currentType, err := resolvePagePath(fs, root, page.Slug)
+	if err != nil {
+		return err
+	}
+
+	// 确定目标类型和目录
+	targetType := currentType
+	if len(newType) > 0 {
+		targetType = newType[0]
 	}
 
 	content := buildPageContent(page)
-	if err := fs.WriteFile(pagePath, []byte(content), 0644); err != nil {
-		return fmt.Errorf("写入页面失败: %w", err)
+
+	if targetType != currentType {
+		// 类型变更：删除原文件，写入新目录
+		if err := fs.Remove(pagePath); err != nil {
+			return fmt.Errorf("删除原页面失败: %w", err)
+		}
+		newDir := pageDirs[targetType]
+		if err := fs.MkdirAll(filepath.Join(root, newDir), 0755); err != nil {
+			return fmt.Errorf("创建目录失败: %w", err)
+		}
+		newPath := filepath.Join(root, newDir, page.Slug+".md")
+		if err := fs.WriteFile(newPath, []byte(content), 0644); err != nil {
+			return fmt.Errorf("写入页面失败: %w", err)
+		}
+	} else {
+		if err := fs.WriteFile(pagePath, []byte(content), 0644); err != nil {
+			return fmt.Errorf("写入页面失败: %w", err)
+		}
 	}
 
 	if err := updateIndexRow(fs, root, page); err != nil {
@@ -278,9 +390,9 @@ func UpdatePage(fs FS, root string, page *Page) error {
 }
 
 func DeletePage(fs FS, root, slug string) error {
-	pagePath := filepath.Join(root, "wiki", "pages", slug+".md")
-	if _, err := fs.Stat(pagePath); err != nil {
-		return fmt.Errorf("页面不存在: %s", slug)
+	pagePath, _, err := resolvePagePath(fs, root, slug)
+	if err != nil {
+		return err
 	}
 
 	if err := fs.Remove(pagePath); err != nil {
@@ -310,6 +422,7 @@ func updateIndexRow(fs FS, root string, page *Page) error {
 			tags := ""
 			scopeStr := ""
 			updated := ""
+			pageType := "page"
 			if page.Frontmatter != nil {
 				if t, ok := page.Frontmatter["title"].(string); ok {
 					title = t
@@ -336,7 +449,7 @@ func updateIndexRow(fs FS, root string, page *Page) error {
 					updated = u
 				}
 			}
-			result = append(result, fmt.Sprintf("| %s | %s | %s | %s | %s |", page.Slug, title, tags, scopeStr, updated))
+			result = append(result, fmt.Sprintf("| %s | %s | %s | %s | %s | %s |", page.Slug, title, pageType, tags, scopeStr, updated))
 		} else {
 			result = append(result, line)
 		}

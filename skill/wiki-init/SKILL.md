@@ -87,6 +87,7 @@ The CLI creates this structure under `wiki_root`:
 │   ├── index.md      ← content catalog: page, summary, tags, updated
 │   ├── log.md        ← append-only operation log
 │   └── pages/        ← flat topic pages, one slug per file
+├── entities/         ← entity pages (people, orgs, projects, tools)
 └── concepts/         ← generated reports, analyses, and answers
 ```
 
