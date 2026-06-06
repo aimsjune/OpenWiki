@@ -158,3 +158,33 @@ func TestDiscoverNotFound(t *testing.T) {
 		t.Fatal("expected error when no config found, got nil")
 	}
 }
+
+func TestDiscoverLocalPriorityOverGlobal(t *testing.T) {
+	// 同时创建 local 和 global 配置
+	homeDir := t.TempDir()
+	openwikiDir := filepath.Join(homeDir, ".openwiki")
+	if err := os.MkdirAll(openwikiDir, 0755); err != nil {
+		t.Fatalf("failed to create .openwiki dir: %v", err)
+	}
+	createTestTOML(t, openwikiDir) // global config
+
+	localDir := t.TempDir()
+	localTomlPath := createTestTOML(t, localDir) // local config
+
+	d := &config.DefaultDiscoverer{
+		HomeDir: homeDir,
+		Getenv:  func(string) string { return "" },
+		Getwd:   func() (string, error) { return localDir, nil },
+	}
+
+	result, err := d.Discover("")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Path != localTomlPath {
+		t.Errorf("expected local config path=%s, got %s", localTomlPath, result.Path)
+	}
+	if result.Source != "local" {
+		t.Errorf("expected source=local, got %s", result.Source)
+	}
+}
