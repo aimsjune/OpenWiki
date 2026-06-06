@@ -51,11 +51,6 @@ func (d *DefaultDiscoverer) Discover(explicitPath string) (*DiscoveryResult, err
 		return &DiscoveryResult{Path: path, Source: "env"}, nil
 	}
 
-	globalPath := filepath.Join(d.HomeDir, ".openwiki", "openwiki.toml")
-	if _, err := os.Stat(globalPath); err == nil {
-		return &DiscoveryResult{Path: globalPath, Source: "global"}, nil
-	}
-
 	cwd, err := d.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("获取当前工作目录失败: %w", err)
@@ -68,6 +63,11 @@ func (d *DefaultDiscoverer) Discover(explicitPath string) (*DiscoveryResult, err
 		if dir == filepath.Dir(dir) {
 			break
 		}
+	}
+
+	globalPath := filepath.Join(d.HomeDir, ".openwiki", "openwiki.toml")
+	if _, err := os.Stat(globalPath); err == nil {
+		return &DiscoveryResult{Path: globalPath, Source: "global"}, nil
 	}
 
 	return nil, ErrConfigNotFound
