@@ -95,3 +95,35 @@ func TestLogAppend(t *testing.T) {
 		t.Fatalf("expected success=true, got error: %v", resp.Error)
 	}
 }
+
+func TestLogAppendParsesStructuredAction(t *testing.T) {
+	dir := t.TempDir()
+	tomlPath := setupTestWiki(t, dir)
+
+	var stdout, stderr bytes.Buffer
+	err := cli.RunWithIO([]string{"--config", tomlPath, "log", "append", "ingest | source - created page", "--json"}, "1.0.0", "2026-06-01T00:00:00Z", &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	err = cli.RunWithIO([]string{"--config", tomlPath, "log", "show", "--limit", "1", "--json"}, "1.0.0", "2026-06-01T00:00:00Z", &stdout, &stderr)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var resp output.Response
+	if err := json.Unmarshal(stdout.Bytes(), &resp); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+	data := resp.Data.(map[string]interface{})
+	entries := data["entries"].([]interface{})
+	entry := entries[0].(map[string]interface{})
+	if entry["action"] != "ingest" {
+		t.Fatalf("expected action=ingest, got %v", entry["action"])
+	}
+	if entry["details"] != "source - created page" {
+		t.Fatalf("unexpected details: %v", entry["details"])
+	}
+}

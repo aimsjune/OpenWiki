@@ -59,6 +59,34 @@ type MemFS struct {
 	dirs  map[string]bool
 }
 
+var fallbackFileLock sync.Mutex
+
+func withFileLock(fs FS, path string, fn func() error) error {
+	if _, ok := fs.(*OsFS); !ok {
+		fallbackFileLock.Lock()
+		defer fallbackFileLock.Unlock()
+		return fn()
+	}
+
+	lockPath := path + ".lock"
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		lockFile, err := os.OpenFile(lockPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+		if err == nil {
+			lockFile.Close()
+			defer os.Remove(lockPath)
+			return fn()
+		}
+		if !os.IsExist(err) {
+			return fmt.Errorf("创建文件锁失败 %s: %w", lockPath, err)
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("等待文件锁超时: %s", lockPath)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 func NewMemFS() *MemFS {
 	return &MemFS{
 		files: make(map[string][]byte),
@@ -190,7 +218,7 @@ type memFileInfo struct {
 func (m *memFileInfo) Name() string       { return m.name }
 func (m *memFileInfo) Size() int64        { return m.size }
 func (m *memFileInfo) Mode() os.FileMode  { return 0644 }
-func (m *memFileInfo) ModTime() time.Time  { return time.Time{} }
+func (m *memFileInfo) ModTime() time.Time { return time.Time{} }
 func (m *memFileInfo) IsDir() bool        { return m.isDir }
 func (m *memFileInfo) Sys() interface{}   { return nil }
 
@@ -199,7 +227,9 @@ type memDirEntry struct {
 	isDir bool
 }
 
-func (m *memDirEntry) Name() string               { return m.name }
-func (m *memDirEntry) IsDir() bool                { return m.isDir }
-func (m *memDirEntry) Type() os.FileMode          { return 0 }
-func (m *memDirEntry) Info() (os.FileInfo, error) { return &memFileInfo{name: m.name, isDir: m.isDir}, nil }
+func (m *memDirEntry) Name() string      { return m.name }
+func (m *memDirEntry) IsDir() bool       { return m.isDir }
+func (m *memDirEntry) Type() os.FileMode { return 0 }
+func (m *memDirEntry) Info() (os.FileInfo, error) {
+	return &memFileInfo{name: m.name, isDir: m.isDir}, nil
+}
