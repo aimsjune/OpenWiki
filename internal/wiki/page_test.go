@@ -1,10 +1,13 @@
 package wiki_test
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/bytedance/openwiki/internal/config"
 	"github.com/bytedance/openwiki/internal/wiki"
 )
 
@@ -234,6 +237,93 @@ func TestCreatePage(t *testing.T) {
 	}
 	if !found {
 		t.Error("new-page not found in index after create")
+	}
+}
+
+func TestCreatePageNormalizesYAMLDateInIndex(t *testing.T) {
+	fs, root := setupTestWiki(t)
+	page, err := wiki.ParsePageContent("dated-page", `---
+title: Dated Page
+tags: [test]
+scope_level: repo
+scope_code: test
+updated: 2026-06-08
+---
+
+content`)
+	if err != nil {
+		t.Fatalf("ParsePageContent failed: %v", err)
+	}
+
+	if err := wiki.CreatePage(fs, root, page); err != nil {
+		t.Fatalf("CreatePage failed: %v", err)
+	}
+
+	pages, err := wiki.ListPages(fs, root)
+	if err != nil {
+		t.Fatalf("ListPages failed: %v", err)
+	}
+	for _, item := range pages {
+		if item.Slug == "dated-page" {
+			if item.Updated != "2026-06-08" {
+				t.Fatalf("expected normalized date, got %q", item.Updated)
+			}
+			return
+		}
+	}
+	t.Fatal("dated-page missing from index")
+}
+
+func TestConcurrentCreatePageKeepsEveryIndexEntry(t *testing.T) {
+	fs := wiki.NewOsFS()
+	root := t.TempDir()
+	cfg := &config.Config{
+		WikiRoot: root,
+		Wiki: config.WikiConfig{
+			PrimaryLanguage:   "zh",
+			SecondaryLanguage: "en",
+		},
+	}
+	if err := wiki.Init(fs, root, cfg); err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+
+	const pageCount = 20
+	var wg sync.WaitGroup
+	errors := make(chan error, pageCount)
+	for i := 0; i < pageCount; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			slug := fmt.Sprintf("concurrent-%02d", i)
+			page := &wiki.Page{
+				Slug: slug,
+				Frontmatter: map[string]interface{}{
+					"title":       slug,
+					"tags":        []string{"test"},
+					"scope_level": "repo",
+					"scope_code":  "concurrency",
+					"updated":     "2026-06-08",
+				},
+				Body: "content",
+			}
+			errors <- wiki.CreatePage(fs, root, page)
+		}(i)
+	}
+	wg.Wait()
+	close(errors)
+	for err := range errors {
+		if err != nil {
+			t.Fatalf("concurrent CreatePage failed: %v", err)
+		}
+	}
+
+	pages, err := wiki.ListPages(fs, root)
+	if err != nil {
+		t.Fatalf("ListPages failed: %v", err)
+	}
+	if len(pages) != pageCount {
+		t.Fatalf("expected %d indexed pages, got %d", pageCount, len(pages))
 	}
 }
 

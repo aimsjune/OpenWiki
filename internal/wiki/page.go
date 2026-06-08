@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -193,6 +194,9 @@ func parsePage(slug, path, content string) (*Page, error) {
 		fmData := strings.TrimSpace(parts[1])
 		var fm map[string]interface{}
 		if err := yaml.Unmarshal([]byte(fmData), &fm); err == nil {
+			if updated, ok := fm["updated"].(time.Time); ok {
+				fm["updated"] = updated.Format("2006-01-02")
+			}
 			page.Frontmatter = fm
 		}
 		page.Body = strings.TrimSpace(parts[2])
@@ -261,92 +265,61 @@ func buildPageContent(page *Page) string {
 
 func addToIndex(fs FS, root string, page *Page, pt PageType) error {
 	indexPath := filepath.Join(root, "wiki", "index.md")
-	data, err := fs.ReadFile(indexPath)
-	if err != nil {
-		return err
-	}
-
-	content := string(data)
-
-	title := ""
-	tags := ""
-	scopeStr := ""
-	updated := ""
-	if page.Frontmatter != nil {
-		if t, ok := page.Frontmatter["title"].(string); ok {
-			title = t
+	return withFileLock(fs, indexPath, func() error {
+		data, err := fs.ReadFile(indexPath)
+		if err != nil {
+			return err
 		}
-		if t, ok := page.Frontmatter["tags"].([]interface{}); ok {
-			var tagStrs []string
-			for _, tag := range t {
-				if s, ok := tag.(string); ok {
-					tagStrs = append(tagStrs, s)
-				}
+
+		title, tags, scopeStr, updated := pageIndexFields(page)
+		newLine := fmt.Sprintf("| %s | %s | %s | %s | %s | %s |", page.Slug, title, string(pt), tags, scopeStr, updated)
+		lines := strings.Split(string(data), "\n")
+
+		// 找到所有分隔线位置，按类型选择正确的插入位置
+		var separatorPositions []int
+		for i, line := range lines {
+			if strings.HasPrefix(strings.TrimSpace(line), "|---") {
+				separatorPositions = append(separatorPositions, i)
 			}
-			tags = strings.Join(tagStrs, ", ")
 		}
-		if sl, ok := page.Frontmatter["scope_level"].(string); ok {
-			scopeStr = sl
-		}
-		if sc, ok := page.Frontmatter["scope_code"].(string); ok {
-			if scopeStr != "" {
-				scopeStr += "/"
+
+		// 根据类型选择插入位置：page→第1个, entity→第2个, concept→第3个
+		insertAfter := 0
+		switch pt {
+		case PageTypeEntity:
+			if len(separatorPositions) >= 2 {
+				insertAfter = separatorPositions[1]
+			} else if len(separatorPositions) >= 1 {
+				insertAfter = separatorPositions[0]
 			}
-			scopeStr += sc
+		case PageTypeConcept:
+			if len(separatorPositions) >= 3 {
+				insertAfter = separatorPositions[2]
+			} else if len(separatorPositions) >= 1 {
+				insertAfter = separatorPositions[0]
+			}
+		default:
+			if len(separatorPositions) >= 1 {
+				insertAfter = separatorPositions[0]
+			}
 		}
-		if u, ok := page.Frontmatter["updated"].(string); ok {
-			updated = u
-		}
-	}
 
-	newLine := fmt.Sprintf("| %s | %s | %s | %s | %s | %s |", page.Slug, title, string(pt), tags, scopeStr, updated)
-
-	lines := strings.Split(content, "\n")
-
-	// 找到所有分隔线位置，按类型选择正确的插入位置
-	var separatorPositions []int
-	for i, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(line), "|---") {
-			separatorPositions = append(separatorPositions, i)
+		var result []string
+		inserted := false
+		for i, line := range lines {
+			result = append(result, line)
+			if !inserted && i == insertAfter {
+				result = append(result, newLine)
+				inserted = true
+			}
 		}
-	}
 
-	// 根据类型选择插入位置：page→第1个, entity→第2个, concept→第3个
-	insertAfter := 0
-	switch pt {
-	case PageTypeEntity:
-		if len(separatorPositions) >= 2 {
-			insertAfter = separatorPositions[1]
-		} else if len(separatorPositions) >= 1 {
-			insertAfter = separatorPositions[0]
-		}
-	case PageTypeConcept:
-		if len(separatorPositions) >= 3 {
-			insertAfter = separatorPositions[2]
-		} else if len(separatorPositions) >= 1 {
-			insertAfter = separatorPositions[0]
-		}
-	default:
-		if len(separatorPositions) >= 1 {
-			insertAfter = separatorPositions[0]
-		}
-	}
-
-	var result []string
-	inserted := false
-	for i, line := range lines {
-		result = append(result, line)
-		if !inserted && i == insertAfter {
+		if !inserted {
 			result = append(result, newLine)
-			inserted = true
 		}
-	}
 
-	if !inserted {
-		result = append(result, newLine)
-	}
-
-	return fs.WriteFile(indexPath, []byte(strings.Join(result, "\n")), 0644)
+		return fs.WriteFile(indexPath, []byte(strings.Join(result, "\n")), 0644)
+	})
 }
 
 func UpdatePage(fs FS, root string, page *Page, newType ...PageType) error {
@@ -408,72 +381,82 @@ func DeletePage(fs FS, root, slug string) error {
 
 func updateIndexRow(fs FS, root string, page *Page) error {
 	indexPath := filepath.Join(root, "wiki", "index.md")
-	data, err := fs.ReadFile(indexPath)
-	if err != nil {
-		return err
-	}
-
-	lines := strings.Split(string(data), "\n")
-	var result []string
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "| "+page.Slug+" |") {
-			title := ""
-			tags := ""
-			scopeStr := ""
-			updated := ""
-			pageType := "page"
-			if page.Frontmatter != nil {
-				if t, ok := page.Frontmatter["title"].(string); ok {
-					title = t
-				}
-				if t, ok := page.Frontmatter["tags"].([]interface{}); ok {
-					var tagStrs []string
-					for _, tag := range t {
-						if s, ok := tag.(string); ok {
-							tagStrs = append(tagStrs, s)
-						}
-					}
-					tags = strings.Join(tagStrs, ", ")
-				}
-				if sl, ok := page.Frontmatter["scope_level"].(string); ok {
-					scopeStr = sl
-				}
-				if sc, ok := page.Frontmatter["scope_code"].(string); ok {
-					if scopeStr != "" {
-						scopeStr += "/"
-					}
-					scopeStr += sc
-				}
-				if u, ok := page.Frontmatter["updated"].(string); ok {
-					updated = u
-				}
-			}
-			result = append(result, fmt.Sprintf("| %s | %s | %s | %s | %s | %s |", page.Slug, title, pageType, tags, scopeStr, updated))
-		} else {
-			result = append(result, line)
+	return withFileLock(fs, indexPath, func() error {
+		data, err := fs.ReadFile(indexPath)
+		if err != nil {
+			return err
 		}
-	}
 
-	return fs.WriteFile(indexPath, []byte(strings.Join(result, "\n")), 0644)
+		lines := strings.Split(string(data), "\n")
+		var result []string
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "| "+page.Slug+" |") {
+				title, tags, scopeStr, updated := pageIndexFields(page)
+				result = append(result, fmt.Sprintf("| %s | %s | %s | %s | %s | %s |", page.Slug, title, "page", tags, scopeStr, updated))
+			} else {
+				result = append(result, line)
+			}
+		}
+
+		return fs.WriteFile(indexPath, []byte(strings.Join(result, "\n")), 0644)
+	})
 }
 
 func removeFromIndex(fs FS, root, slug string) error {
 	indexPath := filepath.Join(root, "wiki", "index.md")
-	data, err := fs.ReadFile(indexPath)
-	if err != nil {
-		return err
-	}
-
-	lines := strings.Split(string(data), "\n")
-	var result []string
-	for _, line := range lines {
-		trimmed := strings.TrimSpace(line)
-		if strings.HasPrefix(trimmed, "| "+slug+" |") {
-			continue
+	return withFileLock(fs, indexPath, func() error {
+		data, err := fs.ReadFile(indexPath)
+		if err != nil {
+			return err
 		}
-		result = append(result, line)
+
+		lines := strings.Split(string(data), "\n")
+		var result []string
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "| "+slug+" |") {
+				continue
+			}
+			result = append(result, line)
+		}
+
+		return fs.WriteFile(indexPath, []byte(strings.Join(result, "\n")), 0644)
+	})
+}
+
+func pageIndexFields(page *Page) (title, tags, scope, updated string) {
+	if page.Frontmatter == nil {
+		return
 	}
 
-	return fs.WriteFile(indexPath, []byte(strings.Join(result, "\n")), 0644)
+	title, _ = page.Frontmatter["title"].(string)
+	switch values := page.Frontmatter["tags"].(type) {
+	case []string:
+		tags = strings.Join(values, ", ")
+	case []interface{}:
+		var tagStrings []string
+		for _, value := range values {
+			if tag, ok := value.(string); ok {
+				tagStrings = append(tagStrings, tag)
+			}
+		}
+		tags = strings.Join(tagStrings, ", ")
+	}
+
+	scopeLevel, _ := page.Frontmatter["scope_level"].(string)
+	scopeCode, _ := page.Frontmatter["scope_code"].(string)
+	scope = scopeLevel
+	if scope != "" && scopeCode != "" {
+		scope += "/"
+	}
+	scope += scopeCode
+
+	switch value := page.Frontmatter["updated"].(type) {
+	case string:
+		updated = value
+	case time.Time:
+		updated = value.Format("2006-01-02")
+	}
+	return
 }

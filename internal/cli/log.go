@@ -98,8 +98,14 @@ func runLogAppend(stdout, stderr io.Writer, opts *GlobalOptions, args []string) 
 		return fmt.Errorf("log append 需要指定日志内容")
 	}
 
+	action := "manual"
+	if parts := strings.SplitN(details, "|", 2); len(parts) == 2 && strings.TrimSpace(parts[0]) != "" {
+		action = strings.TrimSpace(parts[0])
+		details = strings.TrimSpace(parts[1])
+	}
+
 	fs := wiki.NewOsFS()
-	if err := wiki.AppendLog(fs, cfg.WikiRoot, "manual", details); err != nil {
+	if err := wiki.AppendLog(fs, cfg.WikiRoot, action, details); err != nil {
 		if opts.JSON {
 			return output.JSON(stdout, false, nil, &output.ErrorInfo{
 				Code:    "IO_ERROR",

@@ -73,16 +73,24 @@ func parseLogTable(content string) []LogEntry {
 
 func AppendLog(fs FS, root, action, details string) error {
 	logPath := filepath.Join(root, "wiki", "log.md")
-	data, err := fs.ReadFile(logPath)
-	if err != nil {
-		return fmt.Errorf("读取 log.md 失败: %w", err)
-	}
+	return withFileLock(fs, logPath, func() error {
+		data, err := fs.ReadFile(logPath)
+		if err != nil {
+			return fmt.Errorf("读取 log.md 失败: %w", err)
+		}
 
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	newLine := fmt.Sprintf("| %s | %s | %s |", timestamp, action, details)
+		timestamp := time.Now().Format("2006-01-02 15:04:05")
+		newLine := fmt.Sprintf("| %s | %s | %s |", timestamp, escapeLogCell(action), escapeLogCell(details))
 
-	content := strings.TrimRight(string(data), "\n")
-	content += "\n" + newLine + "\n"
+		content := strings.TrimRight(string(data), "\n")
+		content += "\n" + newLine + "\n"
 
-	return fs.WriteFile(logPath, []byte(content), 0644)
+		return fs.WriteFile(logPath, []byte(content), 0644)
+	})
+}
+
+func escapeLogCell(value string) string {
+	value = strings.ReplaceAll(value, "\r", " ")
+	value = strings.ReplaceAll(value, "\n", " ")
+	return strings.ReplaceAll(value, "|", "&#124;")
 }

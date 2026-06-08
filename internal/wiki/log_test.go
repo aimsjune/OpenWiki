@@ -1,7 +1,10 @@
 package wiki_test
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/bytedance/openwiki/internal/wiki"
@@ -84,5 +87,63 @@ func TestAppendLog(t *testing.T) {
 	entries, _ := wiki.ShowLog(fs, root, 0)
 	if len(entries) != 4 {
 		t.Errorf("expected 4 entries after append, got %d", len(entries))
+	}
+}
+
+func TestAppendLogEscapesMarkdownTableSeparators(t *testing.T) {
+	fs, root := setupTestWikiWithLog(t)
+
+	err := wiki.AppendLog(fs, root, "ingest", "source | created page")
+	if err != nil {
+		t.Fatalf("AppendLog failed: %v", err)
+	}
+
+	data, err := fs.ReadFile(filepath.Join(root, "wiki", "log.md"))
+	if err != nil {
+		t.Fatalf("ReadFile failed: %v", err)
+	}
+	if strings.Contains(string(data), "| source | created page |") {
+		t.Fatalf("unescaped separator broke log table: %s", string(data))
+	}
+	if !strings.Contains(string(data), "source &#124; created page") {
+		t.Fatalf("expected escaped separator, got: %s", string(data))
+	}
+}
+
+func TestConcurrentAppendLogKeepsEveryEntry(t *testing.T) {
+	fs := wiki.NewOsFS()
+	root := t.TempDir()
+	if err := fs.MkdirAll(filepath.Join(root, "wiki"), 0755); err != nil {
+		t.Fatalf("MkdirAll failed: %v", err)
+	}
+	initialLog := "# 操作日志\n\n| 时间 | 操作 | 详情 |\n|------|------|------|\n"
+	if err := fs.WriteFile(filepath.Join(root, "wiki", "log.md"), []byte(initialLog), 0644); err != nil {
+		t.Fatalf("WriteFile failed: %v", err)
+	}
+
+	const entryCount = 20
+	var wg sync.WaitGroup
+	errors := make(chan error, entryCount)
+	for i := 0; i < entryCount; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			errors <- wiki.AppendLog(fs, root, "ingest", fmt.Sprintf("entry-%02d", i))
+		}(i)
+	}
+	wg.Wait()
+	close(errors)
+	for err := range errors {
+		if err != nil {
+			t.Fatalf("concurrent AppendLog failed: %v", err)
+		}
+	}
+
+	entries, err := wiki.ShowLog(fs, root, 0)
+	if err != nil {
+		t.Fatalf("ShowLog failed: %v", err)
+	}
+	if len(entries) != entryCount {
+		t.Fatalf("expected %d log entries, got %d", entryCount, len(entries))
 	}
 }

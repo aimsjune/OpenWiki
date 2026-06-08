@@ -19,19 +19,22 @@ def parse_frontmatter(filepath):
             continue
         if stripped.startswith("- ") and current_key:
             val = stripped[2:].strip()
-            if val.startswith("[") and val.endswith("]"):
-                result[current_key] = [v.strip() for v in val[1:-1].split(",")]
-            else:
-                result.setdefault(current_key, []).append(val)
+            if not isinstance(result.get(current_key), list):
+                result[current_key] = []
+            result[current_key].append(val.strip('"').strip("'"))
         elif ":" in stripped:
             key, _, val = stripped.partition(":")
             key = key.strip()
             val = val.strip()
             if val.startswith("[") and val.endswith("]"):
                 result[key] = [v.strip() for v in val[1:-1].split(",")]
-            else:
-                result[key] = val
+                current_key = None
+            elif not val:
+                result[key] = []
                 current_key = key
+            else:
+                result[key] = val.strip('"').strip("'")
+                current_key = None
     return result
 
 
@@ -87,23 +90,27 @@ def check_index_table(wiki_root):
     with open(index_path) as f:
         content = f.read()
 
-    if "## Wiki 页面" not in content:
-        return {"name": "index-table-format", "status": "fail", "message": "index.md 缺少 '## Wiki 页面' 章节"}
-
-    lines = content.split("\n")
-    has_header = False
-    has_separator = False
-    for i, line in enumerate(lines):
-        if "| 页面 |" in line and "摘要" in line and "标签" in line:
-            has_header = True
-        if has_header and "|---" in line:
-            has_separator = True
-            break
-
-    if not has_header or not has_separator:
-        return {"name": "index-table-format", "status": "fail", "message": "index.md 表格格式不正确（缺少表头或分隔行）"}
+    legacy_format = "## Wiki 页面" in content and "| 页面 |" in content and "摘要" in content
+    current_sections = all(section in content for section in ("## 资料页", "## 实体页", "## 概念页"))
+    current_format = current_sections and content.count("| Slug | 标题 | 类型 | 标签 | 适用范围 | 最后更新 |") >= 3
+    if not legacy_format and not current_format:
+        return {"name": "index-table-format", "status": "fail", "message": "index.md 不符合旧版或当前多类型索引格式"}
 
     return {"name": "index-table-format", "status": "pass", "message": "index.md 表格格式正确"}
+
+
+def wiki_page_paths(wiki_root):
+    paths = []
+    for relative_dir in ("wiki/pages", "entities", "concepts"):
+        page_dir = os.path.join(wiki_root, relative_dir)
+        if not os.path.isdir(page_dir):
+            continue
+        paths.extend(
+            os.path.join(page_dir, fname)
+            for fname in os.listdir(page_dir)
+            if fname.endswith(".md")
+        )
+    return paths
 
 
 def check_cross_references(wiki_root):
@@ -111,24 +118,18 @@ def check_cross_references(wiki_root):
     if not os.path.isdir(pages_dir):
         return {"name": "cross-references", "status": "fail", "message": f"wiki/pages/ 目录不存在于 {wiki_root}"}
 
-    existing_slugs = set()
-    for fname in os.listdir(pages_dir):
-        if fname.endswith(".md"):
-            existing_slugs.add(fname[:-3])
-
+    page_paths = wiki_page_paths(wiki_root)
+    existing_slugs = {os.path.basename(path)[:-3] for path in page_paths}
     broken_links = []
     ref_pattern = re.compile(r"\[\[([^\]]+)\]\]")
 
-    for fname in os.listdir(pages_dir):
-        if not fname.endswith(".md"):
-            continue
-        filepath = os.path.join(pages_dir, fname)
-        with open(filepath) as f:
+    for page_path in page_paths:
+        with open(page_path) as f:
             content = f.read()
         for match in ref_pattern.finditer(content):
             target = match.group(1)
             if target not in existing_slugs:
-                broken_links.append(f"{fname[:-3]} -> [[{target}]]")
+                broken_links.append(f"{os.path.basename(page_path)[:-3]} -> [[{target}]]")
 
     if broken_links:
         return {"name": "cross-references", "status": "fail", "message": f"发现 {len(broken_links)} 个断链: {', '.join(broken_links[:5])}"}
@@ -145,12 +146,9 @@ def check_page_frontmatter(wiki_root):
     valid_scope_levels = {"repo", "domain", "company", "industry", "wisdom"}
     missing_pages = []
 
-    for fname in os.listdir(pages_dir):
-        if not fname.endswith(".md"):
-            continue
-        filepath = os.path.join(pages_dir, fname)
-        fm = parse_frontmatter(filepath)
-        slug = fname[:-3]
+    for page_path in wiki_page_paths(wiki_root):
+        fm = parse_frontmatter(page_path)
+        slug = os.path.basename(page_path)[:-3]
 
         missing = [f for f in required_fields if f not in fm]
         if missing:
