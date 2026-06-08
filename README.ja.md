@@ -73,6 +73,8 @@ cd my-wiki
 5. 素材を `<wiki-root>/raw/` に置き、`wiki-ingest` を実行する
 6. `wiki-query`、`wiki-lint`、`wiki-update` で運用する
 
+`openwiki.toml` にはマシン固有の絶対パスが含まれるため、Git にコミットしないでください。リポジトリはルート設定を無視し、代わりに匿名化済みの `openwiki.example.toml` を提供します。
+
 実行時の探索順序：
 - ユーザーが明示した `config-dir` を最優先で使う
 - なければデフォルト設定ディレクトリ `~/.openwiki/openwiki.toml` を確認する
@@ -115,7 +117,8 @@ llm-wiki/
 │   ├── wiki-lint/
 │   ├── wiki-update/
 │   └── agent-browser/
-├── openwiki.toml            # このリポジトリ実体用のランタイム契約
+├── openwiki.example.toml    # コミット可能な匿名化済み設定例
+├── openwiki.toml            # マシンローカルなランタイム契約（Git 対象外）
 ├── raw/
 ├── wiki/
 │   ├── index.md

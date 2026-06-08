@@ -108,7 +108,7 @@ func (d *DefaultDiscoverer) Discover(explicitPath string) (*DiscoveryResult, err
 - [ ] **Step 2: 运行现有测试确保无回归**
 
 ```bash
-cd /Users/bytedance/git/OpenWiki && go test ./internal/config/... -v -count=1
+cd /path/to/OpenWiki && go test ./internal/config/... -v -count=1
 ```
 
 Expected: 所有现有测试 PASS（`TestDiscoverGlobalConfig` 仍然通过，因为其 CWD 是 `/`，没有 local config）。
@@ -172,7 +172,7 @@ func TestDiscoverLocalPriorityOverGlobal(t *testing.T) {
 - [ ] **Step 2: 运行新测试验证通过**
 
 ```bash
-cd /Users/bytedance/git/OpenWiki && go test ./internal/config/... -v -run TestDiscoverLocalPriorityOverGlobal -count=1
+cd /path/to/OpenWiki && go test ./internal/config/... -v -run TestDiscoverLocalPriorityOverGlobal -count=1
 ```
 
 Expected: PASS
@@ -180,7 +180,7 @@ Expected: PASS
 - [ ] **Step 3: 运行全部 config 测试**
 
 ```bash
-cd /Users/bytedance/git/OpenWiki && go test ./internal/config/... -v -count=1
+cd /path/to/OpenWiki && go test ./internal/config/... -v -count=1
 ```
 
 Expected: 全部 PASS

@@ -297,12 +297,12 @@ RIGHT (vertical slices - USE THIS):
 
 ### Phase 1: RED - Write Failing Test
 
-- [ ] **1.1** 在 `tests/test_bilingual_wiki_config_static.py` 中编写测试：读取 `/Users/bytedance/git/llm-wiki/WIKI.md`，验证包含 `primary_language: zh` 和 `secondary_language: en`（或至少向后兼容）
+- [ ] **1.1** 在 `tests/test_bilingual_wiki_config_static.py` 中编写测试：读取 `<repo-root>/WIKI.md`，验证包含 `primary_language: zh` 和 `secondary_language: en`（或至少向后兼容）
 - [ ] **1.2** 运行测试确认 FAILS（当前 WIKI.md 不含语言字段）
 
 ### Phase 2: GREEN - Make Test Pass
 
-- [ ] **2.1** 在 `/Users/bytedance/git/llm-wiki/WIKI.md` 的 frontmatter 中添加 `primary_language: zh` 和 `secondary_language: en`
+- [ ] **2.1** 在 `<repo-root>/WIKI.md` 的 frontmatter 中添加 `primary_language: zh` 和 `secondary_language: en`
 - [ ] **2.2** 运行测试确认 PASSES
 
 ### Phase 3: REFACTOR - Improve

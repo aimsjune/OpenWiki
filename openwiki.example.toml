@@ -1,0 +1,16 @@
+wiki_root = "/absolute/path/to/wiki-root"
+domain = "<user domain description>"
+
+[wiki]
+primary_language = "zh"
+secondary_language = "en"
+
+[wiki.source_types]
+types = ["notes", "web-clippings", "papers", "journals", "code-files"]
+
+[wiki.index]
+categories = ["Wiki Pages", "Concepts Pages", "Topic Relations", "Quick Navigation"]
+
+[remote]
+sync_path = "wiki"
+auto_sync = false

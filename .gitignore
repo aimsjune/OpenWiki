@@ -6,6 +6,12 @@
 # Personal raw content (do not commit private notes)
 
 
+# Machine-local runtime config (contains an absolute wiki_root)
+/openwiki.toml
+
+# Local build outputs can embed machine-specific source paths
+/bin/
+
 # Editor
 .obsidian/
 .vscode/

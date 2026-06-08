@@ -11,8 +11,8 @@ class CloudSyncStaticTest(unittest.TestCase):
         self.assertIn("sync_path", content)
         self.assertIn("auto_sync", content)
 
-    def test_wiki_config_runtime_contains_sync_fields(self) -> None:
-        config_path = REPO_ROOT / "openwiki.toml"
+    def test_wiki_config_example_contains_sync_fields(self) -> None:
+        config_path = REPO_ROOT / "openwiki.example.toml"
         content = config_path.read_text(encoding="utf-8")
         self.assertIn("sync_path", content)
         self.assertIn("auto_sync", content)

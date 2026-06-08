@@ -6,17 +6,16 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 class StandardWikiInitRuntimeTest(unittest.TestCase):
-    def test_repo_has_root_wiki_contract_with_absolute_wiki_root(self) -> None:
-        config_path = REPO_ROOT / "openwiki.toml"
+    def test_repo_keeps_machine_local_wiki_contract_untracked(self) -> None:
+        gitignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+        example = (REPO_ROOT / "openwiki.example.toml").read_text(encoding="utf-8")
 
-        self.assertTrue(config_path.exists(), "expected root openwiki.toml to exist")
+        self.assertIn("/openwiki.toml", gitignore)
+        self.assertIn("/bin/", gitignore)
+        self.assertIn('wiki_root = "/absolute/path/to/wiki-root"', example)
+        self.assertNotIn("/Users/", example)
 
-        content = config_path.read_text(encoding="utf-8")
-        self.assertIn(
-            f'wiki_root = "{REPO_ROOT}"',
-            content,
-            "expected openwiki.toml to record the repository root as an absolute wiki_root",
-        )
+    def test_repo_has_standard_wiki_layout(self) -> None:
         self.assertTrue((REPO_ROOT / "raw").is_dir(), "expected raw/ under wiki_root")
         self.assertTrue((REPO_ROOT / "wiki").is_dir(), "expected wiki/ under wiki_root")
         self.assertTrue(
