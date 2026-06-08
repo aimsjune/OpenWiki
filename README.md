@@ -73,6 +73,8 @@ cd my-wiki
 5. **开始摄入**：将素材放入 `<wiki-root>/raw/`，再运行 `wiki-ingest`
 6. **查询和维护**：使用 `wiki-query`、`wiki-lint`、`wiki-update`
 
+`openwiki.toml` 包含本机绝对路径，不应提交到 Git。仓库根目录已忽略该文件，并提供脱敏的 `openwiki.example.toml` 作为配置示例。
+
 运行时查找规则：
 - 优先使用用户显式提供的 `config-dir`
 - 否则检查默认配置目录 `~/.openwiki/openwiki.toml`
@@ -115,7 +117,8 @@ llm-wiki/
 │   ├── wiki-lint/
 │   ├── wiki-update/
 │   └── agent-browser/
-├── openwiki.toml            # 当前仓库实例的运行时契约
+├── openwiki.example.toml    # 可提交的脱敏配置示例
+├── openwiki.toml            # 本机运行时契约（Git 忽略）
 ├── raw/
 ├── wiki/
 │   ├── index.md

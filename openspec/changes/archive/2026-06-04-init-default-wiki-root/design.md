@@ -77,7 +77,7 @@ wiki.Init(fs, wikiRoot, cfg)  ← 不变
 
 ## Implementation Notes
 
-- 修改位置：[internal/cli/init.go#L27-L35](file:///Users/bytedance/git/OpenWiki/internal/cli/init.go#L27-L35)
+- 修改位置：`internal/cli/init.go#L27-L35`
 - 将 `if len(remaining) == 0 { return error }` 改为 `if len(remaining) == 0 { wikiRoot = "./openwiki/" } else { wikiRoot = remaining[0] }`
 - 测试修改：`TestInitMissingWikiRoot` 需要从"期望报错"改为"期望成功创建在默认路径"
 - 新增 3 个测试用例覆盖默认路径场景

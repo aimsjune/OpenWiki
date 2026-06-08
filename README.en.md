@@ -73,6 +73,8 @@ Load the repository into your compatible agent and ensure it can read the public
 5. Put source material into `<wiki-root>/raw/` and run `wiki-ingest`
 6. Use `wiki-query`, `wiki-lint`, and `wiki-update` for ongoing work
 
+Because `openwiki.toml` contains a machine-specific absolute path, do not commit it to Git. The repository ignores the root config and provides a sanitized `openwiki.example.toml` instead.
+
 Runtime discovery order:
 - prefer an explicitly provided `config-dir`
 - otherwise check the default config directory at `~/.openwiki/openwiki.toml`
@@ -115,7 +117,8 @@ llm-wiki/
 │   ├── wiki-lint/
 │   ├── wiki-update/
 │   └── agent-browser/
-├── openwiki.toml            # runtime contract for this repository instance
+├── openwiki.example.toml    # sanitized, committable config example
+├── openwiki.toml            # machine-local runtime contract (Git-ignored)
 ├── raw/
 ├── wiki/
 │   ├── index.md

@@ -39,7 +39,7 @@ RIGHT (vertical slices - USE THIS):
 ### Phase 2: GREEN - Make Test Pass
 
 - [x] **2.1** 修改 `internal/cli/init.go` 中 `runInit` 函数，将 `wiki-root` 默认值设为 `"./openwiki/"`
-  - 位置: [init.go#L27-L35](file:///Users/bytedance/git/OpenWiki/internal/cli/init.go#L27-L35)
+  - 位置: `internal/cli/init.go#L27-L35`
   - 变更: `remaining` 为空时 `wikiRoot = "./openwiki/"` 而非报错
 
 - [x] **2.2** 运行测试确认 PASSES
